@@ -120,12 +120,13 @@ cp $o/$a-$f $g/$f
 
 g="config";f="application.rb"
 s="s%# *config.time_zone *= *'.*' *$%config.time_zone = 'Brasilia'%"
+s="s%enforce_available_locales *= *true%enforce_available_locales = false%;$s"
 t="1,/config.i18n.default_locale"
-sed -n "$t/p" $g/$f|sed "$s"                                  > $o/$a-$f
-echo -e "    config.i18n.default_locale = 'pt-BR'"           >> $o/$a-$f
-echo -e "    config.i18n.available_locales = ['pt-BR', :en]" >> $o/$a-$f
-echo -e "    config.i18n.locale = 'pt-BR'"                   >> $o/$a-$f
-sed    "$t/d" $g/$f                                          >> $o/$a-$f
+sed -n "$t/p" $g/$f|sed "$s"                                   > $o/$a-$f
+echo -e "    config.i18n.default_locale = :'pt-BR'"           >> $o/$a-$f
+echo -e "    config.i18n.available_locales = [:'pt-BR', :en]" >> $o/$a-$f
+echo -e "    config.i18n.locale = :'pt-BR'"                   >> $o/$a-$f
+sed    "$t/d" $g/$f                                           >> $o/$a-$f
 cp $o/$a-$f $g/$f
 
 #cp ../$a_seeds.rb db/seeds.rb
@@ -137,9 +138,13 @@ rake railties:install:migrations
 rake db:migrate
 #rake spree_auth:admin:create 
 rake db:seed
-rake assets:precompile
+#rake assets:precompile
 
+# Fenix brand
 ../../../fenix-brand/actsite.sh -l
+
+# Repor fenix static files em init-config
+../../scripts/ufdbr.sh -g|sh
 
 git init
 git add .
@@ -154,39 +159,22 @@ git push -u origin master # -u create track
 
 
 heroku apps:destroy --confirm $a
-heroku apps:create $a --region eu
+heroku apps:create $a
 git push heroku master
 
 # aws amazon
 # smtp configs
 # sessoes usando social facebook, twiter, google+
 # PAYPAY 
-heroku labs:enable user-env-compile
+#heroku labs:enable user-env-compile
 heroku config:add AWS_ACCESS_KEY="$AWS_ACCESS_KEY"
-heroku config:add AWS_SECRET="$AWS_SECRET"
-heroku config:add AWS_HOST="$AWS_HOST"
-heroku config:add AWS_PROTOCOL="$AWS_PROTOCOL"
-heroku config:add SMTP_FRUGA="$SMTP_FRUGA"
-heroku config:add SMTP_FRUGA_PASSWORD="$SMTP_FRUGA_PASSWORD"
-heroku config:add FB_API_KEY="$FB_API_KEY"
-heroku config:add TW_API_KEY="$TW_API_KEY"
-heroku config:add GP_API_KEY="$GP_API_KEY"
-heroku config:add FB_API_SECRET="$FB_API_SECRET"
-heroku config:add TW_API_SECRET="$TW_API_SECRET"
-heroku config:add GP_API_SECRET="$GP_API_SECRET"
-heroku config:add PAYPAL_LOGIN="$PAYPAL_LOGIN"
-heroku config:add PAYPAL_PASSWORD="$PAYPAL_PASSWORD"
-heroku config:add PAYPAL_SIGNATURE="$PAYPAL_SIGNATURE"
-heroku config:add PAYPAL_SANDBOX_LOGIN="$PAYPAL_SANDBOX_LOGIN"
-heroku config:add PAYPAL_SANDBOX_PASSWORD="$PAYPAL_SANDBOX_PASSWORD"
-heroku config:add PAYPAL_SANDBOX_SIGNATURE="$PAYPAL_SANDBOX_SIGNATURE"
-heroku config:add PAYPAL_CLI_LOGIN="$PAYPAL_CLI_LOGIN"
-heroku config:add PAYPAL_CLI_PASSWORD="$PAYPAL_CLI_PASSWORD"
-
+#heroku config:add AWS_SECRET="$AWS_SECRET"
+#heroku config:add AWS_HOST="$AWS_HOST"
+#heroku config:add AWS_PROTOCOL="$AWS_PROTOCOL"
 
 heroku run rake db:migrate
 heroku run rake db:seed
-heroku run rake assets:precompile
+#heroku run rake assets:precompile
 
 heroku ps:scale web=1
 heroku restart

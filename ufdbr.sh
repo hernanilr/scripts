@@ -39,7 +39,18 @@ do bn=`basename $f`
    fi
    if [ ! -s "$o/$a/$dn$bn" ]
    then if [ ! -d "$o/$a/$dn" ];then echo "mkdir -p $o/$a/$dn";fi
-       echo cp $dn$bn $o/$a/$dn$bn
+       echo cp $n/$a/$dn$bn $o/$a/$dn$bn
+   fi
+done
+for f in `git status|grep "new  *file:"|sed -e 's%[\t ]*new  *file:[\t ]*%%'`
+do bn=`basename $f`
+   if [ "`dirname $f|wc -c`" -gt 2 ]
+   then dn="`dirname $f`/"
+   else dn=""
+   fi
+   if [ ! -s "$o/$a/$dn$bn" ]
+   then if [ ! -d "$o/$a/$dn" ];then echo "mkdir -p $o/$a/$dn";fi
+       echo cp $n/$a/$dn$bn $o/$a/$dn$bn
    fi
 done
 }

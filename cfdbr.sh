@@ -71,7 +71,7 @@ then cd "$d/$g"
 else echo "Erro git clone $i:$v/$g.git"
 fi
 
-g="spree_social";u="spree";b="2-3-stable"
+g="spree_bootstrap_frontend";u="200Creative";b="2-3-stable"
 cd $d;rm -rf $g
 curl -u "$v:$p" -X DELETE -i $h/repos/$v/$g        > $o/$a-github-$g;sleep 20
 curl -u "$v:$p" -X POST   -i $h/repos/$u/$g/forks >> $o/$a-github-$g;sleep 20
@@ -86,6 +86,20 @@ then cd "$d/$g"
 else echo "Erro git clone $i:$v/$g.git"
 fi
 
+g="spree_social";u="spree";b="2-3-stable"
+cd $d;rm -rf $g
+curl -u "$v:$p" -X DELETE -i $h/repos/$v/$g        > $o/$a-github-$g;sleep 20
+curl -u "$v:$p" -X POST   -i $h/repos/$u/$g/forks >> $o/$a-github-$g;sleep 20
+git clone $i:$v/$g.git
+if [ -d $d/$g ]
+then cd "$d/$g"
+     git remote add github $i:$u/$g.git
+     git fetch github
+     git checkout -t -b $b github/$b
+     echo "2.0.0" > .ruby-version;echo "$a" > .ruby-gemset
+     echo -e "$m\n\t<name>$a-$g</name>$n$l" > .project
+else echo "Erro git clone $i:$v/$g.git"
+fi
 
 # Create root aplication
 rvm --force gemset delete $a
@@ -116,6 +130,12 @@ cp $o/$a-$f $g/$f
 g="config/initializers";f="devise.rb"
 echo "Devise.secret_key=\"<%= ENV['SECRET_KEY_BASE'] %>\"">$g/$f
 
+g="config/initializers";f="assets.rb"
+t="1,/Rails.application.config.assets.version"
+sed -n "$t/p" $g/$f                                        > $o/$a-$f
+echo -e "Rails.application.config.assets.compress = true" >> $o/$a-$f
+sed    "$t/d" $g/$f                                       >> $o/$a-$f
+cp $o/$a-$f $g/$f
 
 bundle install
 bundle update;bundle install
@@ -133,7 +153,8 @@ rails g spree:install --migrate=false --sample=false --seed=false --user_class=S
 rake spree_auth:install:migrations
 rails g spree_i18n:install           # Runs migrations by default
 
-# Usa input Y/n
+# Usam inputs
+rails g spree_bootstrap_frontend:install
 rails g spree_social:install         
 
 g="config";f="production.rb"
@@ -143,8 +164,12 @@ cp $o/$a-$f $g/$f
 
 spring stop
 bundle update;bundle install
-# heroku deploy da erro em assets:precompile
+
+# Vou passar a precompilar para manter versoes no github
+# e para copiar glyphicons fonts sem fingerprint
 rake assets:precompile 
+cp `bundle show bootstrap-sass`/assets/fonts/bootstrap/* public/assets/bootstrap/
+
 git add .
 git commit -m 'fenix init heroku'
 
@@ -158,6 +183,8 @@ git push -u origin master
 heroku apps:destroy --confirm $a
 heroku apps:create $a
 #heroku addons:add pgbackups:auto-month
+#heroku addons:add newrelic:wayne
+
 # aws amazon
 heroku config:add AWS_ACCESS_KEY="$AWS_ACCESS_KEY"
 heroku config:add AWS_SECRET="$AWS_SECRET"

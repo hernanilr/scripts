@@ -13,19 +13,19 @@ i="git@github.com"
 
 usage()
 {
-  cat << EO
-Actualiza static files para comunidade fruga
-EO
+cat << EOF
+Actualiza static files para loja casa dos quadros
+EOF
 
-  cat <<EO | column -s\& -t
+cat <<EOF | column -s\& -t
 
   -h & show this output
-  -n & new    static files to   $o
-  -s & show   static files in   $o
-  -u & update static files in   $o
-  -g & get    static files from $o
-  -d & diff   static files in   $o
-EO
+  -n & new    static files to   `basename $o`
+  -s & show   static files in   `basename $o`
+  -u & update static files in   `basename $o`
+  -g & get    static files from `basename $o`
+  -d & diff   static files in   `basename $o`
+EOF
 }
 
 newsf()

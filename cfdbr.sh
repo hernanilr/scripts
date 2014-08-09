@@ -125,6 +125,10 @@ cp $o/$a-$f $g/$f
 g="config";f="database.yml"
 cp $o/$a-$f $g/$f
 
+# Setup initial monitor (most of these are overriden by newrelic site)
+g="config";f="newrelic.yml"
+cp $o/$a-$f $g/$f
+
 #[WARNING] You are not setting Devise.secret_key within your application!
 #You must set this in config/initializers/devise.rb. Here's an example:
 g="config/initializers";f="devise.rb"
@@ -168,7 +172,17 @@ bundle update;bundle install
 # Vou passar a precompilar para manter versoes no github
 # e para copiar glyphicons fonts sem fingerprint
 rake assets:precompile 
+rake assets:clean 
 cp `bundle show bootstrap-sass`/assets/fonts/bootstrap/* public/assets/bootstrap/
+ft="`ls public/assets/[fF]ont[aA]wesome-[a-z0-9][a-z0-9]*\.*|grep -v webfont`"
+ft="$ft `ls public/assets/fontawesome-webfont-[a-z0-9][a-z0-9]*\.*`"
+for f in $ft
+do dn=`dirname $f`
+   bn=`basename $f`
+   ex=`echo $bn|cut -d'.' -f2`
+   nf=`echo $bn|sed -e 's%^\([a-zA-Z][a-zA-Z\-]*\)-.*%\1%'`
+   cp $f $dn/$nf.$ex
+done
 
 git add .
 git commit -m 'fenix init heroku'
@@ -182,14 +196,17 @@ git push -u origin master
 #INIT heroku
 heroku apps:destroy --confirm $a
 heroku apps:create $a
-#heroku addons:add pgbackups:auto-month
-#heroku addons:add newrelic:wayne
+heroku addons:add pgbackups:auto-month
+heroku addons:add newrelic:wayne
 
 # aws amazon
-heroku config:add AWS_ACCESS_KEY="$AWS_ACCESS_KEY"
-heroku config:add AWS_SECRET="$AWS_SECRET"
-heroku config:add AWS_HOST="$AWS_HOST"
-heroku config:add AWS_PROTOCOL="$AWS_PROTOCOL"
+heroku config:set NEW_RELIC_APP_NAME="$NEW_RELIC_APP_NAME"
+heroku config:set NEW_RELIC_LICENSE_KEY="$NEW_RELIC_LICENSE_KEY"
+heroku config:set AWS_ACCESS_KEY="$AWS_ACCESS_KEY"
+heroku config:set AWS_SECRET="$AWS_SECRET"
+heroku config:set AWS_HOST="$AWS_HOST"
+heroku config:set AWS_PROTOCOL="$AWS_PROTOCOL"
+heroku config:set WEB_CONCURRENCY="4"
 git push heroku master
 heroku run rake db:migrate
 
@@ -248,7 +265,10 @@ git push heroku master
 
 heroku run rake db:migrate;sleep 500
 heroku run rake db:seed;sleep 500
-#heroku run rake assets:precompile
+heroku run rake assets:precompile
+heroku run rake assets:clean
+
+heroku domains:add loja.casadosquadros.com.br
 
 heroku ps:scale web=1
 heroku restart

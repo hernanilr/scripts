@@ -2,25 +2,6 @@
 
 P=${0##*/}
 
-# newrelic.yml em producao (desligado em desenvolvimento)
-export FDNEW_RELIC_APP_NAME="fdbr"
-export FDNEW_RELIC_LICENSE_KEY="55f6a47f4ef9a4a182832f9696ffc7c690abe527"
-
-# fdbr user @fenixdcbr.aws
-export FDAWS_BUCKET="fdbr"
-export FDAWS_KEY="AKIAIF6RUWKZQ2WODWTA"
-export FDAWS_SECRET="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"
-
-# sessoes API facebook, twiter, google+
-export FDGP_API_KEY="111297491178-3o2f12mshm7rithmbhbvhinhjo3k7edc.apps.googleusercontent.com"
-export FDGP_API_SECRET="r74QbgrzwEI5GvOw9YeG1itB"
-export FDTW_API_KEY="urJZWbcDeEgc0KRbQwrHzRVTm"
-export FDTW_API_SECRET="I1WC43bRcKnco3zlqVjB6hCANUYmrV061Aqk4NkPHpZLNNhmlm"
-
-# smtp config for smtp.mandrillapp.com
-export FDSMTP="fenixdcbr@gmail.com"
-export FDSMTP_PASSWORD="d2cFJ8bgFAWYIwTVZGPJyg"
-
 a="fdbr"
 k="/home/hernani/Documents"
 j="$k/as3w"

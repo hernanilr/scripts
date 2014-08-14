@@ -2,6 +2,25 @@
 
 P=${0##*/}
 
+# newrelic.yml em producao (desligado em desenvolvimento)
+export FDNEW_RELIC_APP_NAME="fdbr"
+export FDNEW_RELIC_LICENSE_KEY="55f6a47f4ef9a4a182832f9696ffc7c690abe527"
+
+# fdbr user @fenixdcbr.aws
+export FDAWS_BUCKET="fdbr"
+export FDAWS_KEY="AKIAIF6RUWKZQ2WODWTA"
+export FDAWS_SECRET="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"
+
+# sessoes API facebook, twiter, google+
+export FDGP_API_KEY="111297491178-3o2f12mshm7rithmbhbvhinhjo3k7edc.apps.googleusercontent.com"
+export FDGP_API_SECRET="r74QbgrzwEI5GvOw9YeG1itB"
+export FDTW_API_KEY="urJZWbcDeEgc0KRbQwrHzRVTm"
+export FDTW_API_SECRET="I1WC43bRcKnco3zlqVjB6hCANUYmrV061Aqk4NkPHpZLNNhmlm"
+
+# smtp config for smtp.mandrillapp.com
+export FDSMTP="fenixdcbr@gmail.com"
+export FDSMTP_PASSWORD="d2cFJ8bgFAWYIwTVZGPJyg"
+
 a="fdbr"
 k="/home/hernani/Documents"
 j="$k/as3w"
@@ -148,7 +167,6 @@ rake db:drop;rake db:create
 git init
 git add .
 git commit -m 'fenix init commit'
-git remote add origin $i:$v/$a.git
 
 # Instalar spree
 # Usa input admin user
@@ -158,12 +176,26 @@ rake spree_auth:install:migrations
 rails g spree_i18n:install           # Runs migrations by default
 
 # Usam inputs
+# spree_social estraga spree_bootstrap/frontend all.css
+# por isso ufdbr.sh repoe uma versao all.css boa
 rails g spree_bootstrap_frontend:install
 rails g spree_social:install         
 
-g="config";f="production.rb"
+g="config/environments";f="production.rb"
 s="s%config.serve_static_assets *= *false%config.serve_static_assets=true%"
-sed "$s" $g/$f > $o/$a-$f
+t="1,/dump_schema_after_migration"
+sed -n "$t/p" $g/$f|sed "$s"                                                                                 > $o/$a-$f
+echo -e ""                                                                                                  >> $o/$a-$f
+echo -e "  # configurar S3  "                                                                               >> $o/$a-$f
+echo -e "  config.paperclip_defaults = {"                                                                   >> $o/$a-$f
+echo -e "      storage: :s3,"                                                                               >> $o/$a-$f
+echo -e "      s3_host_name: 's3-sa-east-1.amazonaws.com',"                                                 >> $o/$a-$f
+echo -e "      url: :s3_domain_url,"                                                                        >> $o/$a-$f
+echo -e "      bucket: ENV['FDAWS_BUCKET'],"                                                                >> $o/$a-$f
+echo -e "      s3_credentials: { access_key_id: ENV['FDAWS_KEY'], secret_access_key: ENV['FDAWS_SECRET'] }" >> $o/$a-$f
+echo -e "  }"                                                                                               >> $o/$a-$f
+echo -e ""                                                                                                  >> $o/$a-$f
+sed    "$t/d" $g/$f                                                                                         >> $o/$a-$f
 cp $o/$a-$f $g/$f
 
 spring stop
@@ -191,23 +223,34 @@ g="fdbr";b="{ \"name\": \"$a\",\"description\": \"Loja Casa dos Quadros\" }"
 curl -u "$v:$p" -X DELETE -i $h/repos/$v/$g         > $o/$a-github-$g;sleep 20
 curl -u "$v:$p" -X POST   -i $h/user/repos -d "$b" >> $o/$a-github-$g;sleep 20
 
+git remote add origin $i:$v/$a.git
 git push -u origin master
 
 #INIT heroku
 heroku apps:destroy --confirm $a
 heroku apps:create $a
-heroku addons:add pgbackups:auto-month
-heroku addons:add newrelic:wayne
 
 # aws amazon
-heroku config:set NEW_RELIC_APP_NAME="$NEW_RELIC_APP_NAME"
-heroku config:set NEW_RELIC_LICENSE_KEY="$NEW_RELIC_LICENSE_KEY"
-heroku config:set AWS_ACCESS_KEY="$AWS_ACCESS_KEY"
-heroku config:set AWS_SECRET="$AWS_SECRET"
-heroku config:set AWS_HOST="$AWS_HOST"
-heroku config:set AWS_PROTOCOL="$AWS_PROTOCOL"
-heroku config:set WEB_CONCURRENCY="4"
+heroku config:set FDAWS_BUCKET="$FDAWS_BUCKET"
+heroku config:set FDAWS_KEY="$FDAWS_KEY"
+heroku config:set FDAWS_SECRET="$FDAWS_SECRET"
+heroku config:set FDGP_API_KEY="$FDGP_API_KEY"
+heroku config:set FDGP_API_SECRET="$FDGP_API_SECRET"
+heroku config:set FDTW_API_KEY="$FDTW_API_KEY"
+heroku config:set FDTW_API_SECRET="$FDTW_API_SECRET"
+heroku config:set FDSMTP="$FDSMTP"
+heroku config:set FDSMTP_FENIX_PASSWORD="$FDSMTP_PASSWORD"
+
 git push heroku master
+
+heroku addons:add pgbackups:auto-month
+
+# newrelic addon ja cria uma app e LICENSE KEY por defeito
+heroku addons:add newrelic:wayne
+heroku config:set NEW_RELIC_APP_NAME="$FDNEW_RELIC_APP_NAME"
+heroku config:set NEW_RELIC_LICENSE_KEY="$FDNEW_RELIC_LICENSE_KEY"
+heroku config:set WEB_CONCURRENCY="4"
+
 heroku run rake db:migrate
 
 g="config/initializers";f="spree.rb"
@@ -218,11 +261,25 @@ g="config";f="application.rb"
 s="s%# *config.time_zone *= *'.*' *$%config.time_zone = 'Brasilia'%"
 s="s%enforce_available_locales *= *true%enforce_available_locales = false%;$s"
 t="1,/config.i18n.default_locale"
-sed -n "$t/p" $g/$f|sed "$s"                              > $o/$a-$f
-echo -e "    config.i18n.default_locale = :'pt-BR'"      >> $o/$a-$f
-echo -e "    config.i18n.available_locales = [:'pt-BR']" >> $o/$a-$f
-echo -e "    config.i18n.locale = :'pt-BR'"              >> $o/$a-$f
-sed    "$t/d" $g/$f                                      >> $o/$a-$f
+sed -n "$t/p" $g/$f|sed "$s"                                                                     > $o/$a-$f
+echo -e "    config.i18n.default_locale = :'pt-BR'"                                             >> $o/$a-$f
+echo -e "    config.i18n.available_locales = [:'pt-BR']"                                        >> $o/$a-$f
+echo -e "    config.i18n.locale = :'pt-BR'"                                                     >> $o/$a-$f
+echo -e ""                                                                                      >> $o/$a-$f
+echo -e "    config.action_mailer.default_url_options = { host: 'loja.casadosquadros.com.br' }" >> $o/$a-$f
+echo -e "    config.action_mailer.delivery_method = :smtp"                                      >> $o/$a-$f
+echo -e "    config.action_mailer.raise_delivery_errors = true "                                >> $o/$a-$f
+echo -e "    config.action_mailer.smtp_settings = { "                                           >> $o/$a-$f
+echo -e "      address: 'smtp.mandrillapp.com',"                                                >> $o/$a-$f
+echo -e "      port: 587,"                                                                      >> $o/$a-$f
+echo -e "      domain: 'casadosquadros.com.br',"                                                >> $o/$a-$f
+echo -e "      enable_starttls_auto: true,"                                                     >> $o/$a-$f
+echo -e "      authentication:  :plain,"                                                        >> $o/$a-$f
+echo -e "      user_name: ENV['FDSMTP'],"                                                       >> $o/$a-$f
+echo -e "      password: ENV['FDSMTP_PASSWORD']"                                                >> $o/$a-$f
+echo -e "      }"                                                                               >> $o/$a-$f
+echo -e ""                                                                                      >> $o/$a-$f
+sed    "$t/d" $g/$f                                                                             >> $o/$a-$f
 cp $o/$a-$f $g/$f
 
 g="db";f="seeds.rb"
@@ -255,20 +312,20 @@ echo ".env" >> .gitignore
 
 spring stop
 bundle update;bundle install
-#O heroku precisa disto no INIT
-rm -rf public/assets/
-git status|grep deleted:|sed 's%[ \t]*deleted: *%git rm %'|sh
+rake assets:precompile 
+rake assets:clean 
+
 git add .
 git commit -m 'fenix brand & assets'
-git push -u origin master
+git push origin master
 git push heroku master
 
-heroku run rake db:migrate;sleep 500
-heroku run rake db:seed;sleep 500
-heroku run rake assets:precompile
-heroku run rake assets:clean
+heroku run rake railties:install:migrations
+
+heroku run rake db:migrate
+
+heroku run rake db:seed
 
 heroku domains:add loja.casadosquadros.com.br
-
 heroku ps:scale web=1
 heroku restart

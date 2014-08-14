@@ -1,40 +1,6 @@
 #!/bin/bash
 
-# newrelic
-export CFNEW_RELIC_APP_NAME="cfpt"
-export CFNEW_RELIC_LICENSE_KEY="baf90c32f336b57d91b0ae2e60c40d4afbceec62"
-
-# aws amazon
-export CFAWS_ACCESS_KEY="AKIAI2VVCFUM6UIGVQAQ"
-export CFAWS_SECRET="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"
-export CFAWS_BUCKET="cfpt"
-export CFAWS_REGION="eu-west-1"
-export CFAWS_HOST="s3-eu-west-1.amazonaws.com"
-export CFAWS_ENDPOINT="http://$AWS_HOST"
-# cfpt testa esta var para usar AWS
-export provider="AWS"
-
-# smtp config
-export CFSMTP="frugapt@gmail.com"
-export CFSMTP_PASSWORD="pprglh99"
-
-# MANDRILL & MAILCHIMP
-# para ser usada na comunidade BUT NOT YET
-export CFMANDRILL_USERNAME="hernanilr"
-export CFMANDRILL_API_KEY="8d716b7f-271a-4a31-9cd2-f513ad69af06"
-export CFMAILCHIMP_API_KE="24638ae8c18e7c67c4a735e14cc91e50-us5"
-export CFRPX_API_KEY="b34556780f6607ae9181df568350be1a048883ca"
-
-# sessoes API twitter fliker
-# para ser usadas na comunidade BUT NOT YET
-export CFTW_oauth_token="588289016-6r3kVQf7sXqgJ9MNklFo7WElcL1MctH76iyP6AGL"
-export CFTW_oauth_secret="pzO8ovFgXXkvRqoKe5DFbEy4aDwwlMcsfZE0Swe6ps"
-export CFTW_API_KEY="dpMQPpHyyaTkLRgnPLIxg"
-export CFTW_API_SECRET="iESSaKcYtioH3xjp6hFH9BC8HVR7PxciZy3e0NddaU"
-export CFFL_API_KEY="f514d142662b2eafc8b18f87feec71ba"
-export CFFL_API_SECRET="18c184d1845300fd"
-
-a="$CFNEW_RELIC_APP_NAME"
+a="cfpt"
 d="/home/hernani/Documents/as3w"
 o="$d/init-config"
 v="frugapt"

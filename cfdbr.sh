@@ -125,10 +125,6 @@ cp $o/$a-$f $g/$f
 g="config";f="database.yml"
 cp $o/$a-$f $g/$f
 
-# Setup initial monitor (most of these are overriden by newrelic site)
-g="config";f="newrelic.yml"
-cp $o/$a-$f $g/$f
-
 #[WARNING] You are not setting Devise.secret_key within your application!
 #You must set this in config/initializers/devise.rb. Here's an example:
 g="config/initializers";f="devise.rb"
@@ -166,6 +162,11 @@ g="config/environments";f="production.rb"
 s="s%config.serve_static_assets *= *false%config.serve_static_assets=true%"
 t="1,/dump_schema_after_migration"
 sed -n "$t/p" $g/$f|sed "$s"                                                                                 > $o/$a-$f
+echo -e ""                                                                                                  >> $o/$a-$f
+echo -e "  # Enable serving of images, stylesheets, and JavaScripts from an asset server."                  >> $o/$a-$f
+echo -e "  config.action_controller.asset_host = \"//#{ENV['FOG_DIRECTORY']}.s3-sa-east-1.amazonaws.com\""  >> $o/$a-$f
+echo -e "  # store assets in a 'folder' instead of bucket root"                                             >> $o/$a-$f
+echo -e "  config.assets.prefix = '/assets'"                                                                >> $o/$a-$f
 echo -e ""                                                                                                  >> $o/$a-$f
 echo -e "  # configurar S3  "                                                                               >> $o/$a-$f
 echo -e "  config.paperclip_defaults = {"                                                                   >> $o/$a-$f
@@ -215,12 +216,18 @@ heroku apps:create $a
 heroku config:set FDAWS_BUCKET="$FDAWS_BUCKET"
 heroku config:set FDAWS_KEY="$FDAWS_KEY"
 heroku config:set FDAWS_SECRET="$FDAWS_SECRET"
+
+# gem asset_sync uses these
+heroku config:set FOG_PROVIDER="AWS"
+heroku config:set FOG_DIRECTORY="$FDAWS_BUCKET"
+heroku config:set FOG_REGION="sa-east-1"
+
 heroku config:set FDGP_API_KEY="$FDGP_API_KEY"
 heroku config:set FDGP_API_SECRET="$FDGP_API_SECRET"
 heroku config:set FDTW_API_KEY="$FDTW_API_KEY"
 heroku config:set FDTW_API_SECRET="$FDTW_API_SECRET"
 heroku config:set FDSMTP="$FDSMTP"
-heroku config:set FDSMTP_FENIX_PASSWORD="$FDSMTP_PASSWORD"
+heroku config:set FDSMTP_PASSWORD="$FDSMTP_PASSWORD"
 
 git push heroku master
 
@@ -263,9 +270,6 @@ echo -e ""                                                                      
 sed    "$t/d" $g/$f                                                                             >> $o/$a-$f
 cp $o/$a-$f $g/$f
 
-g="db";f="seeds.rb"
-cp $o/$a-$f $g/$f
-
 # deve ser executado depois de 
 # github merge 
 # porque podem haver novas migracoes
@@ -280,13 +284,6 @@ $k/fenix-brand/actsite.sh -l
 # Repor fenix static files em init-config
 $j/scripts/ufdbr.sh -g|sh
 
-# Usar heroku recomendation for HTTP server unicorn
-g="config";f="unicorn.rb"
-cp $o/$a-$f $g/$f
-g="config/initializers";f="timeout.rb"
-cp $o/$a-$f $g/$f
-g=".";f="Procfile"
-cp $o/$a-$f $g/$f
 echo "RACK_ENV=development" >> .env
 echo "PORT=3000" >> .env
 echo ".env" >> .gitignore
@@ -309,4 +306,9 @@ heroku run rake db:seed
 
 heroku domains:add loja.casadosquadros.com.br
 heroku ps:scale web=1
+
+# depois de gem asset_sync preciso disto para sync with s3
+heroku run rake assets:precompile 
+heroku run rake assets:clean 
+
 heroku restart

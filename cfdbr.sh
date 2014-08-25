@@ -25,6 +25,9 @@ then cd $d
 else mkdir $d;cd $d
 fi
 
+# este script so pode ser corrido com copy pastes
+exit 
+
 # CLONE LOCAL GEMS
 g="spree";u="spree";b="2-3-stable"
 cd $d;rm -rf $g

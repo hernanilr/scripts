@@ -166,13 +166,15 @@ echo -e ""                                                                      
 echo -e "  # Enable serving of images, stylesheets, and JavaScripts from an asset server."                  >> $o/$a-$f
 echo -e "  config.action_controller.asset_host = \"//#{ENV['FOG_DIRECTORY']}.s3-sa-east-1.amazonaws.com\""  >> $o/$a-$f
 echo -e "  # store assets in a 'folder' instead of bucket root"                                             >> $o/$a-$f
-echo -e "  config.assets.prefix = '/assets'"                                                                >> $o/$a-$f
+echo -e "  #config.assets.prefix = '/assets'"                                                               >> $o/$a-$f
 echo -e ""                                                                                                  >> $o/$a-$f
-echo -e "  # configurar S3  "                                                                               >> $o/$a-$f
+echo -e "  # configurar S3"                                                                                 >> $o/$a-$f
 echo -e "  config.paperclip_defaults = {"                                                                   >> $o/$a-$f
 echo -e "      storage: :s3,"                                                                               >> $o/$a-$f
+echo -e "      s3_storage_class: :reduced_redundancy,"                                                      >> $o/$a-$f
+echo -e "      s3_host_alias: ENV['FDAWS_BUCKET'],"                                                         >> $o/$a-$f
 echo -e "      s3_host_name: 's3-sa-east-1.amazonaws.com',"                                                 >> $o/$a-$f
-echo -e "      url: :s3_domain_url,"                                                                        >> $o/$a-$f
+echo -e "      url: :s3_alias_url,"                                                                         >> $o/$a-$f
 echo -e "      bucket: ENV['FDAWS_BUCKET'],"                                                                >> $o/$a-$f
 echo -e "      s3_credentials: { access_key_id: ENV['FDAWS_KEY'], secret_access_key: ENV['FDAWS_SECRET'] }" >> $o/$a-$f
 echo -e "  }"                                                                                               >> $o/$a-$f
@@ -217,10 +219,10 @@ heroku config:set FDAWS_BUCKET="$FDAWS_BUCKET"
 heroku config:set FDAWS_KEY="$FDAWS_KEY"
 heroku config:set FDAWS_SECRET="$FDAWS_SECRET"
 
-# gem asset_sync uses these
-heroku config:set FOG_PROVIDER="AWS"
-heroku config:set FOG_DIRECTORY="$FDAWS_BUCKET"
-heroku config:set FOG_REGION="sa-east-1"
+# gem asset_sync uses these with these names
+heroku config:set FOG_PROVIDER="$FOG_PROVIDER"
+heroku config:set FOG_DIRECTORY="$FOG_DIRECTORY"
+heroku config:set FOG_REGION="$FOG_REGION"
 
 heroku config:set FDGP_API_KEY="$FDGP_API_KEY"
 heroku config:set FDGP_API_SECRET="$FDGP_API_SECRET"

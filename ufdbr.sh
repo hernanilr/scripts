@@ -6,8 +6,9 @@ a="fdbr"
 k="spree"
 c="spree_auth_devise"
 e="spree_bootstrap_frontend"
-g="spree_i18n"
+i="spree_i18n"
 j="spree_social"
+m="asset_sync"
 d="/home/hernani/Documents/as3w"
 n="$d/fenix"
 o="$d/init-config"
@@ -21,11 +22,19 @@ EOF
 cat <<EOF | column -s\& -t
 
   -h & show this output
-  -s & show   files in   `basename $o`
-  -n & new    files to   `basename $o`
-  -u & update files in   `basename $o`
-  -g & get    files from `basename $o`
-  -d & diff   files in   `basename $o`
+  -s & show     files in   `basename $o`
+  -n & new      files to   `basename $o`
+  -u & update   files in   `basename $o`
+  -g & get      files from `basename $o`
+  -a & get      files from `basename $o`/$a
+  -k & get      files from `basename $o`/$k
+  -c & get      files from `basename $o`/$c
+  -e & get      files from `basename $o`/$e
+  -i & get      files from `basename $o`/$i
+  -j & get      files from `basename $o`/$j
+  -m & get      files from `basename $o`/$m
+  -l & get init files from `basename $o`/$a
+  -d & diff     files in   `basename $o`
 EOF
 }
 
@@ -118,25 +127,48 @@ do bn=`basename $f`
 done
 }
 
+getinit()
+{
+cd $o/$a
+for f in `find . -type f -print|grep config`
+do bn=`basename $f`
+   if [ "`dirname $f|wc -c`" -gt 2 ]
+   then dn="`dirname $f|cut -c3-`/"
+   else dn=""
+   fi
+   if [ ! -d "$n/$a/$dn" ];then echo "mkdir -p $n/$a/$dn";fi
+   echo cp $o/$a/$dn$bn $n/$a/$dn$bn
+done
+}
+
 if [ ! -d $o/$a ];then mkdir $o/$a;fi
 if [ ! -d $o/$k ];then mkdir $o/$k;fi
 if [ ! -d $o/$c ];then mkdir $o/$c;fi
 if [ ! -d $o/$e ];then mkdir $o/$e;fi
-if [ ! -d $o/$g ];then mkdir $o/$g;fi
+if [ ! -d $o/$i ];then mkdir $o/$i;fi
 if [ ! -d $o/$j ];then mkdir $o/$j;fi
+if [ ! -d $o/$m ];then mkdir $o/$m;fi
 
-ARGS=$(getopt -a -o hnsugd --name $PROGNAME -- "$@")
+ARGS=$(getopt -a -o hnsugakceijmld --name $PROGNAME -- "$@")
 
 eval set -- "$ARGS"
 
 while true; do
     case $1 in
     -h)  usage ;   exit 0;;
-    -n)  newsf $a;newsf $k;newsf $c;newsf $e;newsf $g;newsf $j; exit 0;;
-    -s)  shwsf $a;shwsf $k;shwsf $c;shwsf $e;shwsf $g;shwsf $j; exit 0;;
-    -u)  updsf $a;updsf $k;updsf $c;updsf $e;updsf $g;updsf $j; exit 0;;
-    -g)  getsf $a;getsf $k;getsf $c;getsf $e;getsf $g;getsf $j; exit 0;;
-    -d)  difsf $a;difsf $k;difsf $c;difsf $e;difsf $g;difsf $j; exit 0;;
+    -n)  newsf $a;newsf $k;newsf $c;newsf $e;newsf $i;newsf $j;newsf $m; exit 0;;
+    -s)  shwsf $a;shwsf $k;shwsf $c;shwsf $e;shwsf $i;shwsf $j;shwsf $m; exit 0;;
+    -u)  updsf $a;updsf $k;updsf $c;updsf $e;updsf $i;updsf $j;updsf $m; exit 0;;
+    -g)  getsf $a;getsf $k;getsf $c;getsf $e;getsf $i;getsf $j;getsf $m; exit 0;;
+    -a)  getsf $a;                                                       exit 0;;
+    -k)  getsf $k;                                                       exit 0;;
+    -c)  getsf $c;                                                       exit 0;;
+    -e)  getsf $e;                                                       exit 0;;
+    -i)  getsf $i;                                                       exit 0;;
+    -j)  getsf $j;                                                       exit 0;;
+    -m)  getsf $m;                                                       exit 0;;
+    -l)  getinit ;                                                       exit 0;;
+    -d)  difsf $a;difsf $k;difsf $c;difsf $e;difsf $i;difsf $j;difsf $m; exit 0;;
     --)  shift; break;;
     *)   shift; break;;
     esac

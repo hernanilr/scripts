@@ -28,7 +28,9 @@ fi
 # este script so pode ser corrido com copy pastes
 exit 
 
-# CLONE LOCAL GEMS
+# Tem os templates para brand safe css emails
+# Nao usado directamente mas copiei o template para spree mailer
+# templates estudados para stable branding across email clientes
 g="antwort";u="InterNations";b="master"
 cd $d;rm -rf $g
 curl -u "$v:$p" -X DELETE -i $h/repos/$v/$g        > $o/$a-github-$g;sleep 20
@@ -44,6 +46,8 @@ then cd "$d/$g"
 else echo "Erro git clone $i:$v/$g.git"
 fi
 
+# CLONE LOCAL GEMS
+# Usada para syncronizar assets com aws.amazon
 g="asset_sync";u="rumblelabs";b="master"
 cd $d;rm -rf $g
 curl -u "$v:$p" -X DELETE -i $h/repos/$v/$g        > $o/$a-github-$g;sleep 20
@@ -144,6 +148,21 @@ then cd "$d/$g"
 else echo "Erro git clone $i:$v/$g.git"
 fi
 
+g="spree_reviews";u="spree";b="2-3-stable"
+cd $d;rm -rf $g
+curl -u "$v:$p" -X DELETE -i $h/repos/$v/$g        > $o/$a-github-$g;sleep 20
+curl -u "$v:$p" -X POST   -i $h/repos/$u/$g/forks >> $o/$a-github-$g;sleep 20
+git clone $i:$v/$g.git
+if [ -d $d/$g ]
+then cd "$d/$g"
+     git remote add github $i:$u/$g.git
+     git fetch github
+     git checkout -t -b $b github/$b
+     echo "2.0.0" > .ruby-version;echo "$a" > .ruby-gemset
+     echo -e "$m\n\t<name>$a-$g</name>$n$l" > .project
+else echo "Erro git clone $i:$v/$g.git"
+fi
+
 # Create root aplication
 rvm --force gemset delete $a
 rvm gemset create $a
@@ -187,13 +206,19 @@ spring stop
 rails g spree:install --migrate=false --sample=false --seed=false --user_class=Spree::User --enforce_available_locales=true
 
 rake spree_auth:install:migrations
+
+rails g spree_social:install
+rails g spree_reviews:install
 rails g spree_i18n:install           # Runs migrations by default
 
-# Usam inputs
-# spree_social estraga spree_bootstrap/frontend all.css
-# por isso ufdbr.sh repoe uma versao all.css boa
+# spree_bootstrap_frontend overrides other css all.css
+# ufdbr.sh repoe all.css
 rails g spree_bootstrap_frontend:install
-rails g spree_social:install         
+
+# Para criar local DB inicial
+rake railties:install:migrations 
+rake db:migrate
+rake db:seed
 
 # Inicializacao da configuracao fenix
 $j/scripts/ufdbr.sh -l|sh
@@ -232,6 +257,8 @@ heroku config:set FOG_REGION="$FOG_REGION"
 # spree_login_social
 heroku config:set FDGP_API_KEY="$FDGP_API_KEY"
 heroku config:set FDGP_API_SECRET="$FDGP_API_SECRET"
+heroku config:set FDFB_API_KEY="$FDFB_API_KEY"
+heroku config:set FDFB_API_SECRET="$FDFB_API_SECRET"
 heroku config:set FDTW_API_KEY="$FDTW_API_KEY"
 heroku config:set FDTW_API_SECRET="$FDTW_API_SECRET"
 
@@ -252,8 +279,11 @@ heroku config:set NEWRELIC_AGENT_ENABLED=false
 
 # Para colocar assets:precompile no heroku precisa ter DB
 heroku run rake db:migrate
-heroku run rake db:seed
 rm -rf public/assets
+# Eliminar rails default manifest files 
+# Spree uses spree/frontend/all spree/backend/all
+rm -f app/assets/stylesheets/application.css
+rm -f app/assets/javascripts/application.js
 git add . -A
 git commit -m 'fenix assets:precompile feito no heroku'
 git push origin master
@@ -263,7 +293,6 @@ git push heroku master
 # porque podem haver novas migracoes
 rake railties:install:migrations 
 rake db:migrate
-rake db:seed
 
 # Fenix brand & images & static files
 $k/fenix-brand/actsite.sh
@@ -275,7 +304,7 @@ echo "PORT=3000" >> .env
 echo ".env" >> .gitignore
 
 spring stop
-bandle update;bundle install
+bundle update;bundle install
 
 git add .
 git commit -m 'fenix ufdbr'

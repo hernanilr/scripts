@@ -93,6 +93,7 @@ d2="#{d}/fenix/spree/api/config/locales"
 d3="#{d}/fenix/spree/backend/config/locales"
 d4="#{d}/fenix/spree_social/config/locales"
 d5="#{d}/fenix/spree_auth_devise/config/locales"
+d6="#{d}/fenix/spree_reviews/config/locales"
 df="#{d}/init-config/#{a}/config/locales"
 
 # Translate API key Fruga Portugal
@@ -103,8 +104,8 @@ p="target=#{t}"
 
 
 # carrega en.yml pt-BR.yml global em init-config
-h1=YAML.load_file("#{d1}/#{f}.yml")[f]
 ht=YAML.load_file("#{df}/#{t}.yml")[t]
+h1=YAML.load_file("#{d1}/#{f}.yml")[f]
 r1=processa(h1,ht)
 h2=YAML.load_file("#{d2}/#{f}.yml")[f]
 r2=processa(h2,r1)
@@ -114,9 +115,11 @@ h4=YAML.load_file("#{d4}/#{f}.yml")[f]
 r4=processa(h4,r3)
 h5=YAML.load_file("#{d5}/#{f}.yml")[f]
 r5=processa(h5,r4)
+h6=YAML.load_file("#{d6}/#{f}.yml")[f]
+r6=processa(h6,r5)
 
 File.open("#{t}.yml", 'w') do |out|
-  out.write({t => r5}.ya2yaml)
+  out.write({t => r6}.ya2yaml)
 end
 #File.open("#{a}-#{t}.csv", 'w') do |out|
 #  out.write(Yaml2csv::yaml2csv({t => r5}.ya2yaml))

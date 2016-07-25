@@ -1,0 +1,343 @@
+#!/usr/bin/env ruby 
+
+require 'fileutils'
+require 'optparse'
+require 'color'
+require 'rmagick'
+require 'paleta'
+
+$opt = { home: "/home/hernani/Documents/fruga-brand", limit: 0.1 }
+
+def palette
+
+#####  Color Palette fruga base by Paletton.com
+#####  Palette URL: http://paletton.com/#uid=73i0u0kigtH8mN1d-B5mepEq0ld
+#c02 #3D8E8E = rgb( 61,142,142) = rgba( 61,142,142,1) = rgb0(0.239,0.557,0.557) primary    brand-primary
+#c03 #EDA366 = rgb(237,163,102) = rgba(237,163,102,1) = rgb0(0.929,0.639,0.4)   complement brand-warning:browns
+#c04 #4E669F = rgb( 78,102,159) = rgba( 78,102,159,1) = rgb0(0.306,0.4,0.624)   secondary  brand-info:blues:30º
+#c05 #EDC066 = rgb(237,192,102) = rgba(237,192,102,1) = rgb0(0.929,0.753,0.4)   secondary  yellow coin 30º
+#c06 #ED6666 = rgb(237,102,102) = rgba(237,102,102,1) = rgb0(0.929,0.4,0.4)     secondary  brand-danger:reds:150º
+#c07 #51BD51 = rgb( 81,189, 81) = rgba( 81,189, 81,1) = rgb0(0.318,0.741,0.318) secondary  brand-success:greens:150º
+#
+#c08 #9CD2D2 = rgb(156,210,210) = rgba(156,210,210,1) = rgb0(0.612,0.824,0.824)
+#c09 #63ACAC = rgb( 99,172,172) = rgba( 99,172,172,1) = rgb0(0.388,0.675,0.675)
+#c10 #257B7B = rgb( 37,123,123) = rgba( 37,123,123,1) = rgb0(0.145,0.482,0.482)
+#c11 #136565 = rgb( 19,101,101) = rgba( 19,101,101,1) = rgb0(0.075,0.396,0.396)
+#
+#c12 #FFDBBD = rgb(255,219,189) = rgba(255,219,189,1) = rgb0(1,0.859,0.741)
+#c13 #FFC493 = rgb(255,196,147) = rgba(255,196,147,1) = rgb0(1,0.769,0.576)
+#c14 #CC7F3E = rgb(204,127, 62) = rgba(204,127, 62,1) = rgb0(0.8,0.498,0.243)
+#c15 #A95E20 = rgb(169, 94, 32) = rgba(169, 94, 32,1) = rgb0(0.663,0.369,0.125)
+#
+#c16 #A7B7DA = rgb(167,183,218) = rgba(167,183,218,1) = rgb0(0.655,0.718,0.855)
+#c17 #7489BB = rgb(116,137,187) = rgba(116,137,187,1) = rgb0(0.455,0.537,0.733)
+#c18 #344E89 = rgb( 52, 78,137) = rgba( 52, 78,137,1) = rgb0(0.204,0.306,0.537)
+#c19 #1F3871 = rgb( 31, 56,113) = rgba( 31, 56,113,1) = rgb0(0.122,0.22,0.443)
+#
+#c20 #FFE9BD = rgb(255,233,189) = rgba(255,233,189,1) = rgb0(1,0.914,0.741)
+#c21 #FFDB93 = rgb(255,219,147) = rgba(255,219,147,1) = rgb0(1,0.859,0.576)
+#c22 #CC9D3E = rgb(204,157, 62) = rgba(204,157, 62,1) = rgb0(0.8,0.616,0.243)
+#c23 #A97B20 = rgb(169,123, 32) = rgba(169,123, 32,1) = rgb0(0.663,0.482,0.125)
+#
+#c24 #FFBDBD = rgb(255,189,189) = rgba(255,189,189,1) = rgb0(1,0.741,0.741)
+#c25 #FF9393 = rgb(255,147,147) = rgba(255,147,147,1) = rgb0(1,0.576,0.576)
+#c26 #CC3E3E = rgb(204, 62, 62) = rgba(204, 62, 62,1) = rgb0(0.8,0.243,0.243)
+#c27 #A92020 = rgb(169, 32, 32) = rgba(169, 32, 32,1) = rgb0(0.663,0.125,0.125)
+#
+#c28 #ACE9AC = rgb(172,233,172) = rgba(172,233,172,1) = rgb0(0.675,0.914,0.675)
+#c29 #7BD67B = rgb(123,214,123) = rgba(123,214,123,1) = rgb0(0.482,0.839,0.482)
+#c30 #32A432 = rgb( 50,164, 50) = rgba( 50,164, 50,1) = rgb0(0.196,0.643,0.196)
+#c31 #198719 = rgb( 25,135, 25) = rgba( 25,135, 25,1) = rgb0(0.098,0.529,0.098)
+#
+# [IMPORTANTE] 
+# All svg's have to be passed throught:
+# inkscape -l new.svg old.svg (inkscape svg format)
+# the inkscape svg format is necessary for this script
+# the fill:<color> format is used in this script
+
+$vco=[]
+$dco=[]
+
+# palette fruga base (USADO EM TODO SCRIPT)
+$vco.push("#3f3f3f") #c00 cinza
+$vco.push("#f7f7f7") #c01 white
+$vco.push("#3d8e8e") #c02 primary    brand-primary
+$vco.push("#eda366") #c03 complement brand-warning:browns
+$vco.push("#4e669f") #c04 secondary  brand-info:blues:30º
+$vco.push("#edc066") #c05 secondary  yellow coin 30º
+$vco.push("#ed6666") #c06 secondary  brand-danger:reds:150º
+$vco.push("#51bd51") #c07 secondary  brand-success:greens:150º
+# palette fruga calculada (USADO EM TODO SCRIPT)
+c=Color::RGB.from_html($vco[2])
+$vco.push(Color::HSL.from_fraction(c.to_hsl.h+0.000,c.to_hsl.s-0.024,c.to_hsl.l+0.320).html) #c08
+$vco.push(Color::HSL.from_fraction(c.to_hsl.h+0.000,c.to_hsl.s-0.094,c.to_hsl.l+0.133).html) #c09
+$vco.push(Color::HSL.from_fraction(c.to_hsl.h+0.000,c.to_hsl.s+0.138,c.to_hsl.l-0.084).html) #c10
+$vco.push(Color::HSL.from_fraction(c.to_hsl.h+0.000,c.to_hsl.s+0.284,c.to_hsl.l-0.163).html) #c11
+c=Color::RGB.from_html($vco[3])
+$vco.push(Color::HSL.from_fraction(c.to_hsl.h+0.000,c.to_hsl.s+0.211,c.to_hsl.l+0.206).html) #c12
+$vco.push(Color::HSL.from_fraction(c.to_hsl.h+0.000,c.to_hsl.s+0.211,c.to_hsl.l+0.124).html) #c13
+$vco.push(Color::HSL.from_fraction(c.to_hsl.h+0.001,c.to_hsl.s-0.208,c.to_hsl.l-0.143).html) #c14
+$vco.push(Color::HSL.from_fraction(c.to_hsl.h+0.000,c.to_hsl.s-0.108,c.to_hsl.l-0.271).html) #c15
+c=Color::RGB.from_html($vco[4])
+$vco.push(Color::HSL.from_fraction(c.to_hsl.h-0.003,c.to_hsl.s+0.066,c.to_hsl.l+0.290).html) #c16
+$vco.push(Color::HSL.from_fraction(c.to_hsl.h+0.000,c.to_hsl.s+0.001,c.to_hsl.l+0.129).html) #c17
+$vco.push(Color::HSL.from_fraction(c.to_hsl.h-0.002,c.to_hsl.s+0.108,c.to_hsl.l-0.094).html) #c18
+$vco.push(Color::HSL.from_fraction(c.to_hsl.h-0.001,c.to_hsl.s+0.228,c.to_hsl.l-0.182).html) #c19
+c=Color::RGB.from_html($vco[5])
+$vco.push(Color::HSL.from_fraction(c.to_hsl.h-0.000,c.to_hsl.s+0.211,c.to_hsl.l+0.206).html) #c20
+$vco.push(Color::HSL.from_fraction(c.to_hsl.h+0.000,c.to_hsl.s+0.211,c.to_hsl.l+0.124).html) #c21
+$vco.push(Color::HSL.from_fraction(c.to_hsl.h+0.000,c.to_hsl.s-0.208,c.to_hsl.l-0.143).html) #c22
+$vco.push(Color::HSL.from_fraction(c.to_hsl.h-0.000,c.to_hsl.s-0.108,c.to_hsl.l-0.271).html) #c23
+c=Color::RGB.from_html($vco[6])
+$vco.push(Color::HSL.from_fraction(c.to_hsl.h+0.000,c.to_hsl.s+0.211,c.to_hsl.l+0.206).html) #c24
+$vco.push(Color::HSL.from_fraction(c.to_hsl.h+0.000,c.to_hsl.s+0.211,c.to_hsl.l+0.124).html) #c25
+$vco.push(Color::HSL.from_fraction(c.to_hsl.h+0.000,c.to_hsl.s-0.208,c.to_hsl.l-0.143).html) #c26
+$vco.push(Color::HSL.from_fraction(c.to_hsl.h+0.000,c.to_hsl.s-0.108,c.to_hsl.l-0.271).html) #c27
+c=Color::RGB.from_html($vco[7])
+$vco.push(Color::HSL.from_fraction(c.to_hsl.h+0.000,c.to_hsl.s+0.131,c.to_hsl.l+0.265).html) #c28
+$vco.push(Color::HSL.from_fraction(c.to_hsl.h+0.000,c.to_hsl.s+0.076,c.to_hsl.l+0.131).html) #c29
+$vco.push(Color::HSL.from_fraction(c.to_hsl.h+0.000,c.to_hsl.s+0.083,c.to_hsl.l-0.110).html) #c30
+$vco.push(Color::HSL.from_fraction(c.to_hsl.h+0.000,c.to_hsl.s+0.237,c.to_hsl.l-0.216).html) #c31
+
+# descritivos palette
+$dco.push("brand:cinza")
+$dco.push("brand:white")
+$dco.push("brand-primary")
+$dco.push("brand-warning:brown:complement")
+$dco.push("brand-info:blue:secondary:30º")
+$dco.push("brand:yellow:secondary:30º")
+$dco.push("brand-danger:red:secondary:150º")
+$dco.push("brand-success:green:secondary:150º")
+$dco.push($vco[2]+":h+0.000,s-0.024,l+0.320") #c08
+$dco.push($vco[2]+":h+0.000,s-0.094,l+0.133") #c09
+$dco.push($vco[2]+":h+0.000,s+0.138,l-0.084") #c10
+$dco.push($vco[2]+":h+0.000,s+0.284,l-0.163") #c11
+$dco.push($vco[3]+":h+0.000,s+0.211,l+0.206") #c12
+$dco.push($vco[3]+":h+0.000,s+0.211,l+0.124") #c13
+$dco.push($vco[3]+":h+0.001,s-0.208,l-0.143") #c14
+$dco.push($vco[3]+":h+0.000,s-0.108,l-0.271") #c15
+$dco.push($vco[4]+":h-0.003,s+0.066,l+0.290") #c16
+$dco.push($vco[4]+":h+0.000,s+0.001,l+0.129") #c17
+$dco.push($vco[4]+":h-0.002,s+0.108,l-0.094") #c18
+$dco.push($vco[4]+":h-0.001,s+0.228,l-0.182") #c19
+$dco.push($vco[5]+":h-0.000,s+0.211,l+0.206") #c20
+$dco.push($vco[5]+":h+0.000,s+0.211,l+0.124") #c21
+$dco.push($vco[5]+":h+0.000,s-0.208,l-0.143") #c22
+$dco.push($vco[5]+":h-0.000,s-0.108,l-0.271") #c23
+$dco.push($vco[6]+":h+0.000,s+0.211,l+0.206") #c24
+$dco.push($vco[6]+":h+0.000,s+0.211,l+0.124") #c25
+$dco.push($vco[6]+":h+0.000,s-0.208,l-0.143") #c26
+$dco.push($vco[6]+":h+0.000,s-0.108,l-0.271") #c27
+$dco.push($vco[7]+":h+0.000,s+0.131,l+0.265") #c28
+$dco.push($vco[7]+":h+0.000,s+0.076,l+0.131") #c29
+$dco.push($vco[7]+":h+0.000,s+0.083,l-0.110") #c30
+$dco.push($vco[7]+":h+0.000,s+0.237,l-0.216") #c31
+
+end
+
+def showpalette
+
+n=0
+$vco.each do |c|
+  puts "<h1 style=\"background-color:#{c};\">cor:#{sprintf('%02d',n)}:#{c}:#{$dco[n]}</h1>"
+  n+=1
+end
+
+end
+
+def showcolors(typ)
+
+  # mostra cores actualmente nos svgs
+  dirb=File.join($opt[:home], $b, "??.svg")
+  dirc=File.join($opt[:home], $c, "??.svg")
+
+  puts "current #{typ} colors in svgs"
+
+  chex=[]
+  Dir.glob([dirb, dirc]) do |f|
+    File.readlines(f).each do |li| 
+      chex.push(li[/#....../i].downcase) if (li[/#{typ}:#/])
+    end
+  end
+  puts chex.uniq
+
+end
+
+def sc(c,v)
+  b=v.map { |t| { k: t, sm: Paleta::Color.new(:hex,t).similarity(Paleta::Color.new(:hex,c)) } }
+  r=b.reject { |t| t[:sm] > $opt[:limit] }
+  r.sort { |a,b| a[:sm] <=> b[:sm] }[0]
+end
+
+def simreport
+
+#def fz(o,s,l)
+#  l+'%+.3f' % (o-s)
+#end
+
+  # mostra cores actualmente nos svgs
+  dirb=File.join($opt[:home], $b, "*.svg")
+  dirc=File.join($opt[:home], $c, "*.svg")
+
+  puts "similarity report on new colors in svgs"
+
+  Dir.glob([dirb, dirc]).sort.each do |f|
+    chex=[]
+    File.readlines(f).each do |li| 
+      chex.push(li[/#....../i].downcase) if (li[/fill:#/])
+      chex.push(li[/#....../i].downcase) if (li[/stroke:#/])
+    end
+    if !(chex-$vco).empty?
+      k=chex-$vco
+      z=k.map {|m| r=sc(m,$vco); { o: m, s: r ? r[:k] : nil, sm: r ? r[:sm] : nil } }
+      s=z.reject {|m| m[:sm].nil? }
+      n=z.reject {|m| !m[:sm].nil? }
+      #s.sort! {|a,b| a[:sm] <=> b[:sm] }
+      #s.each  {|m| 
+      #  co=Color::RGB.from_html(m[:o])
+      #  cs=Color::RGB.from_html(m[:s])
+      #  puts m[:o]+':'+m[:s]+'|'+
+      #       fz(co.to_hsl.h,cs.to_hsl.h,'h')+
+      #       fz(co.to_hsl.s,cs.to_hsl.s,'s')+
+      #       fz(co.to_hsl.l,cs.to_hsl.l,'l')+
+      #       'sm%.2f' % m[:sm]
+      #}
+      #n.each  {|m| puts m[:o]+':'+'nao' }
+      puts File.basename(f)+", #{sprintf('%02d',s.count)} similar, #{sprintf('%02d',n.count)} unmatched colors"
+    end
+  end
+
+end
+
+def simchange
+
+  # mostra cores actualmente nos svgs
+  dirb=File.join($opt[:home], $b, "t?.svg")
+  dirc=File.join($opt[:home], $c, "zz.svg")
+
+  puts "change similar colors in svgs"
+
+  Dir.glob([dirb, dirc]).sort.each do |f|
+    chex=[]
+    File.readlines(f).each do |li| 
+      chex.push(li[/#....../i].downcase) if (li[/fill:#/])
+      chex.push(li[/#....../i].downcase) if (li[/stroke:#/])
+    end
+    if !(chex-$vco).empty?
+      k=(chex-$vco).map {|m| r=sc(m,$vco); { o: m, s: r ? r[:k] : nil, sm: r ? r[:sm] : nil } }
+      s=k.reject {|m| m[:sm].nil? }
+      if !s.empty?
+        sfi=File.basename(f, ".svg")+"-"+Time.now.strftime("%Y%m%d%H%M%S")+".svg"
+        FileUtils.cp(f, File.join(File.dirname(File.dirname(f)), $m, sfi))
+        $nfi = File.read(f)
+        s.map {|u| $nfi=$nfi.gsub(u[:o], u[:s]) }
+        File.open(f, "w") {|file| file.puts $nfi }
+        puts File.basename(f)+", #{sprintf('%02d',s.count)} similar colors changes"
+      end
+    end
+  end
+
+end
+
+# default logos & compositions
+$f1="fc" # fruga.big-tree-sun-grass
+$f2="fa" # fruga.big-cosiz-3cor
+$f3="fb" # fruga.sma-cosiz-3cor
+$f4="fe" # fruga.big      -1cor
+$f5="fk" # fruga.sma      -1cor-favicon-16x16-gig-eye
+$f6="fg" # fruga.big-cotrp-2cor
+$f7="fh" # fruga.sma-cotrp-2cor
+$f8="fi" # fruga.big-ranhu-1cor
+$f9="fj" # fruga.sma-ranhu-1cor
+
+$l1="ca" # logo1 main                 0143x0059
+$l2="ch" # fruga.big-tree1-sun-www-l1 0660x0150
+$l3="cl" # trace1-ci                  2120x1192
+
+$t1="ta" # tree1-amendoeira
+$t2="tb" # tree2-small-flowers
+
+# operation dirs
+$b="base"
+$m="svg"
+$o="png"
+$c="comp"
+$t="tmp"
+$v="jpg"
+$e="other"
+
+# output dirs for apps (mercado e comunidade)
+$z="/home/hernani/Documents/as3w/mfpt"
+$x="/home/hernani/Documents/as3w/cfpt"
+
+so="
+  -b svg     & go back to last change similarity colors
+"
+
+opt_parser = OptionParser.new do |o|
+  o.banner = "Usage: ppng COMANDO [OPTIONS]"
+  o.separator  ""
+  o.separator  "comandos"
+  o.separator  "  sfc: show current fill   colors for all svgs"
+  o.separator  "  ssc: show current stroke colors for all svgs"
+  o.separator  "  sip: show internal palette"
+  o.separator  "  ssr: show similarity report"
+  o.separator  "  suc: show unmatched color list (html  )"
+  o.separator  "  mch: show   matched color list (html  )"
+  o.separator  "  mcs: show   matched color list (script)"
+  o.separator  "  opt: optimize svgs - deve ser feito antes novos svgs [IMPORTANTE]"
+  o.separator  "  sod: show cordes values obtained from corori"
+  o.separator  "  cod: change corori into cordes"
+  o.separator  "  csc: change similar colors"
+  o.separator  ""
+  o.separator  "options"
+  
+  o.on("-o dir-base","dir base de trabalho") do |dir|
+    $opt[:home] = dir
+  end
+
+  o.on("-c corori:cordes","cores no formato hex FFFFFF") do |cors|
+    $opt[:corori] = cors[0,5]
+    $opt[:cordes] = cors[7,12]
+  end
+  
+  o.on("-l n",Float,"set similarity limit (default #{$opt[:limit]})") do |n|
+    $opt[:limit] = n
+  end
+
+  o.on("-h","ajuda") do 
+    puts opt_parser
+  end
+end
+
+opt_parser.parse!
+
+case ARGV[0]
+  when "sfc"
+    showcolors "fill"
+  when "ssc"
+    showcolors "stroke"
+  when "sip"
+    palette
+    showpalette
+  when "ssr"
+    palette
+    simreport
+  when "suc"
+    puts "show unmatched color list (html  ) #{$opt.inspect}"
+  when "mch"
+    puts "show   matched color list (html  ) #{$opt.inspect}"
+  when "mcs"
+    puts "show   matched color list (script) #{$opt.inspect}"
+  when "opt"
+    puts "optimize svgs - deve ser feito antes novos svgs [IMPORTANTE] #{$opt.inspect}"
+  when "sod"
+    puts "show cordes values obtained from corori #{$opt.inspect}"
+  when "cod"
+    puts "change corori into cordes #{$opt.inspect}"
+  when "csc"
+    palette
+    simchange
+else
+    puts "processar pgns"
+end

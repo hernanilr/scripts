@@ -1,128 +1,131 @@
 #!/usr/bin/env ruby
 
-require 'rubygems'
 require 'ya2yaml'   # this gem is needed for this to work!
 require 'yaml'
 require 'json'
 require 'uri'
+require 'yaml2csv'
 
-def translate(sf,st)
+def translate(sen,spt)
 
   #ajustar arrays
-  if sf.kind_of?(Array)
-    slf=sf.join(" ")  
-    if st then
-      slt=st.join(" ") 
-    end
+  if sen.kind_of?(Array)
+    saen=sen.join(" ")  
   else
-    slf=sf
-    slt=st
+    saen=sen
+  end
+  if spt then
+    if spt.kind_of?(Array)
+       sapt=spt.join(" ") 
+    else
+       sapt=spt
+    end
   end
 
   # So obtem traducao se ainda nao existir 
-  if slt then
-    r=slt.strip
+  if sapt then
+    # Por vezes en e una string 
+    # mas pt ja foi manualmente traduzido
+    # com Hash (uma estrutura mais complexa
+    if spt.kind_of?(String)
+      resposta=sapt.strip
+    else
+      resposta=sapt
+    end
   else
-    cmd = <<-EOF
-      wget -q -O - "#{@g}#{URI.escape(slf)}"
-    EOF
-    cmd.strip!
-    rcm=`#{cmd}`
-    r=JSON.parse(rcm)["data"]["translations"].first["translatedText"].strip
+    if saen and saen.length > 0 then
+      cmd = <<-EOF
+        wget -q -O - "#{@g}#{URI.escape(saen)}"
+      EOF
+      cmd.strip!
+      rcm=`#{cmd}`
+      resposta=JSON.parse(rcm)["data"]["translations"].first["translatedText"].strip
+      puts "#{resposta}"
+    else
+      resposta=nil
+    end
   end
 
   #devolve array caso fosse array
-  if sf.kind_of?(Array)
-    r.split
+  if sen.kind_of?(Array)
+    resposta.split
   else
-    r
+    resposta
   end
 
 end
 
-def processa(lf,lt)
-  lf.inject({}) do |h, lfp|
-    kf, vf = lfp
-    if lt
-      kt, vt = lt.assoc(kf)
+#             en, pt
+def processa(len,lpt)
+  len.inject({}) do |ini, lenp|
+    ken, ven = lenp
+    if lpt
+      kpt, vpt = lpt.assoc(ken)
     else
-      kt, vt = nil, nil
+      kpt, vpt = ken, nil
     end
-    if vf.kind_of?(Hash) then 
-      h[kf] = processa(vf,vt) 
-    elsif vf.kind_of?(String) then
-      h[kf] = translate(vf,vt)
-    elsif vf.kind_of?(Array) then 
-      h[kf] = translate(vf,vt)
+    if ven.kind_of?(Hash) then 
+      ini[ken] = processa(ven,vpt) 
+    elsif ven.kind_of?(String) then
+      ini[ken] = translate(ven,vpt)
+    elsif ven.kind_of?(Array) then 
+      ini[ken] = translate(ven,vpt)
     else 
-      h[kf] = vf
+      ini[ken] = ven
     end
-    h
+    if lpt
+      # Em pt soma old + new keys
+      lpt.merge!(ini)
+      ini.merge!(lpt)
+    else
+      ini
+    end
   end
 end
+
+a="mfpt"
+d="/home/hernani/Documents/as3w"
 
 f="en"
 t="pt"
-d1="/home/hernani/Documents/as3w/spree_i18n/config/locales"
-d2="/home/hernani/Documents/as3w/spree_store_credits/config/locales"
-d3="/home/hernani/Documents/as3w/spree_social/config/locales"
-d4="/home/hernani/Documents/as3w/better_spree_paypal_express/config/locales"
-d5="/home/hernani/Documents/as3w/spree_simple_weight_calculator/config/locales"
-# Verificacao manual
-dl="/home/hernani/Documents/as3w/rails-i18n/rails/locale"
+d1="#{d}/fruga/spree/core/config/locales"
+d2="#{d}/fruga/spree/api/config/locales"
+d3="#{d}/fruga/spree/backend/config/locales"
+d4="#{d}/fruga/spree_social/config/locales"
+d5="#{d}/fruga/spree_auth_devise/config/locales"
+d6="#{d}/fruga/spree_reviews/config/locales"
+df="#{d}/init-config/fruga/#{a}/config/locales"
 
 # Translate API key Fruga Portugal
 k="key=AIzaSyA_9z70YJc-f1bgJtJtPh4GNQyxONXoR4M"
 s="source=#{f}"
-a="target=#{t}-#{t.upcase}"
-@g="https://www.googleapis.com/language/translate/v2?#{k}&#{s}&#{a}&q="
+p="target=#{t}-PT"
+@g="https://www.googleapis.com/language/translate/v2?#{k}&#{s}&#{p}&q="
 
-# carrega en.yml pt.yml de spree_i18n
-hf=YAML.load_file("#{d1}/#{f}.yml")[f]
-ht=YAML.load_file("#{d1}/#{t}.yml")[t]
-# obtem nova traducao somente para chaves nao existentes
-rp=processa(hf,ht)
-# escreve pt-spree_i18n
-File.open("#{t}-spree_i18n.yml", 'w') do |out|
-  out.write({t => rp}.ya2yaml)
-end
 
-# carrega en.yml pt.yml de spree_store_credits
-hf=YAML.load_file("#{d2}/#{f}.yml")[f]
-ht=YAML.load_file("#{d2}/#{t}.yml")[t]
-# obtem nova traducao somente para chaves nao existentes
-rp=processa(hf,ht)
-# escreve pt-spree_store_credits
-File.open("#{t}-spree_store_credits.yml", 'w') do |out|
-  out.write({t => rp}.ya2yaml)
-end
+# carrega en.yml pt.yml global em init-config
+ht=YAML.load_file("#{df}/#{t}.yml")[t]
+h1=YAML.load_file("#{d1}/#{f}.yml")[f]
+r1=processa(h1,ht)
+h2=YAML.load_file("#{d2}/#{f}.yml")[f]
+r2=processa(h2,r1)
+h3=YAML.load_file("#{d3}/#{f}.yml")[f]
+r3=processa(h3,r2)
+h4=YAML.load_file("#{d4}/#{f}.yml")[f]
+r4=processa(h4,r3)
+h5=YAML.load_file("#{d5}/#{f}.yml")[f]
+r5=processa(h5,r4)
+h6=YAML.load_file("#{d6}/#{f}.yml")[f]
+r6=processa(h6,r5)
 
-# carrega en.yml pt.yml de spree_social
-hf=YAML.load_file("#{d3}/#{f}.yml")[f]
-ht=YAML.load_file("#{d3}/#{t}.yml")[t]
-# obtem nova traducao somente para chaves nao existentes
-rp=processa(hf,ht)
-# escreve pt-spree_social
-File.open("#{t}-spree_social.yml", 'w') do |out|
-  out.write({t => rp}.ya2yaml)
+File.open("#{t}.yml", 'w') do |out|
+  out.write({t => r6}.ya2yaml)
 end
+#File.open("#{a}-#{t}.csv", 'w') do |out|
+#  out.write(Yaml2csv::yaml2csv({t => r5}.ya2yaml))
+#end
+# Criar yml after spreadsheet edition
+#File.open("#{d}/#{a}-#{t}-f.yml", 'w') do |out|
+#  out.write(Yaml2csv::csv2yaml(File.open("#{a}-#{t}.csv", 'r')))
+#end
 
-# carrega en.yml pt.yml de better_spree_paypal_express
-hf=YAML.load_file("#{d4}/#{f}.yml")[f]
-ht=YAML.load_file("#{d4}/#{t}.yml")[t]
-# obtem nova traducao somente para chaves nao existentes
-rp=processa(hf,ht)
-# escreve pt-better_spree_paypal_express
-File.open("#{t}-better_spree_paypal_express.yml", 'w') do |out|
-  out.write({t => rp}.ya2yaml)
-end
-
-# carrega en.yml pt.yml de spree_simple_weight_calculator
-hf=YAML.load_file("#{d5}/#{f}.yml")[f]
-ht=YAML.load_file("#{d5}/#{t}.yml")[t]
-# obtem nova traducao somente para chaves nao existentes
-rp=processa(hf,ht)
-# escreve pt-spree_simple_weight_calculator
-File.open("#{t}-spree_simple_weight_calculator.yml", 'w') do |out|
-  out.write({t => rp}.ya2yaml)
-end

@@ -1,0 +1,287 @@
+#!/bin/bash
+
+P=${0##*/}
+
+a="mfpt"
+k="/home/hernani/Documents"
+j="$k/as3w"
+d="$j/fruga"
+o="$j/init-config/fruga"
+v="frugapt"
+p="pprglh99"
+h="https://api.github.com"
+i="git@github-fruga"
+m="<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+m="$m\n<projectDescription>"
+n="\n\t<comment></comment>\n\t<projects>\n\t</projects>"
+l="\n\t<buildSpec>\n\t\t<buildCommand>\n\t\t\t<name>com.aptana.ide.core.unifiedBuilder</name>"
+l="$l\n\t\t\t<arguments>\n\t\t\t</arguments>\n\t\t</buildCommand>\n\t</buildSpec>"
+l="$l\n\t<natures>\n\t\t<nature>com.aptana.ruby.core.rubynature</nature>\n\t</natures>"
+l="$l\n</projectDescription>"
+rb="2.2.2"
+ri="4.2.7"
+
+# root fruga
+if [ -d $d ]
+then cd $d
+else mkdir $d;cd $d
+fi
+
+# setup current shell to use a specific ruby version 
+rvm use $rb --default
+
+# este script so pode ser corrido com copy pastes
+exit 
+
+# Tem os templates para brand safe css emails
+# Nao usado directamente mas copiei o template para spree mailer
+# templates estudados para stable branding across email clientes
+g="antwort";u="InterNations";b="master"
+cd $d;rm -rf $g
+curl -u "$v:$p" -X DELETE -i $h/repos/$v/$g        > $o/$a-github-$g;sleep 20
+curl -u "$v:$p" -X POST   -i $h/repos/$u/$g/forks >> $o/$a-github-$g;sleep 20
+git clone $i:$v/$g.git
+if [ -d $d/$g ]
+then cd "$d/$g"
+     git remote add github $i:$u/$g.git
+     git fetch github
+     git checkout -t -b $b github/$b
+     echo "$rb" > .ruby-version;echo "$a" > .ruby-gemset
+     echo -e "$m\n\t<name>$a-$g</name>$n$l" > .project
+else echo "Erro git clone $i:$v/$g.git"
+fi
+
+# Usada para syncronizar assets com aws.amazon
+#g="asset_sync";u="AssetSync";b="master"
+#cd $d;rm -rf $g
+#curl -u "$v:$p" -X DELETE -i $h/repos/$v/$g        > $o/$a-github-$g;sleep 20
+#curl -u "$v:$p" -X POST   -i $h/repos/$u/$g/forks >> $o/$a-github-$g;sleep 20
+#git clone $i:$v/$g.git
+#if [ -d $d/$g ]
+#then cd "$d/$g"
+#     git remote add github $i:$u/$g.git
+#     git fetch github
+#     git checkout -t -b $b github/$b
+#     echo "$rb" > .ruby-version;echo "$a" > .ruby-gemset
+#     echo -e "$m\n\t<name>$a-$g</name>$n$l" > .project
+#     # spree tem fruga umfpt
+#     $j/scripts/umfpt -m|sh
+#     git add .
+#     git commit -m 'fruga umfpt'
+#     git push origin
+#else echo "Erro git clone $i:$v/$g.git"
+#fi
+
+g="spree";u="spree";b="3-1-stable"
+cd $d;rm -rf $g
+curl -u "$v:$p" -X DELETE -i $h/repos/$v/$g        > $o/$a-github-$g;sleep 20
+curl -u "$v:$p" -X POST   -i $h/repos/$u/$g/forks >> $o/$a-github-$g;sleep 20
+git clone $i:$v/$g.git
+if [ -d $d/$g ]
+then cd "$d/$g"
+     git remote add github $i:$u/$g.git
+     git fetch github
+     git checkout -t -b $b github/$b
+     echo "$rb" > .ruby-version;echo "$a" > .ruby-gemset
+     echo -e "$m\n\t<name>$a-$g</name>$n$l" > .project
+     # spree tem fruga umfpt
+     $j/scripts/umfpt -k|sh
+     git add .
+     git commit -m 'fruga umfpt'
+     git push origin
+else echo "Erro git clone $i:$v/$g.git"
+fi
+
+g="spree_auth_devise";u="spree";b="3-1-stable"
+cd $d;rm -rf $g
+curl -u "$v:$p" -X DELETE -i $h/repos/$v/$g        > $o/$a-github-$g;sleep 20
+curl -u "$v:$p" -X POST   -i $h/repos/$u/$g/forks >> $o/$a-github-$g;sleep 20
+git clone $i:$v/$g.git
+if [ -d $d/$g ]
+then cd "$d/$g"
+     git remote add github $i:$u/$g.git
+     git fetch github
+     git checkout -t -b $b github/$b
+     echo "$rb" > .ruby-version;echo "$a" > .ruby-gemset
+     echo -e "$m\n\t<name>$a-$g</name>$n$l" > .project
+else echo "Erro git clone $i:$v/$g.git"
+fi
+
+g="spree_i18n";u="spree-contrib";b="3-1-stable"
+cd $d;rm -rf $g
+curl -u "$v:$p" -X DELETE -i $h/repos/$v/$g        > $o/$a-github-$g;sleep 20
+curl -u "$v:$p" -X POST   -i $h/repos/$u/$g/forks >> $o/$a-github-$g;sleep 20
+git clone $i:$v/$g.git
+if [ -d $d/$g ]
+then cd "$d/$g"
+     git remote add github $i:$u/$g.git
+     git fetch github
+     git checkout -t -b $b github/$b
+     echo "$rb" > .ruby-version;echo "$a" > .ruby-gemset
+     echo -e "$m\n\t<name>$a-$g</name>$n$l" > .project
+else echo "Erro git clone $i:$v/$g.git"
+fi
+
+g="spree_social";u="spree-contrib";b="3-1-stable"
+cd $d;rm -rf $g
+curl -u "$v:$p" -X DELETE -i $h/repos/$v/$g        > $o/$a-github-$g;sleep 20
+curl -u "$v:$p" -X POST   -i $h/repos/$u/$g/forks >> $o/$a-github-$g;sleep 20
+git clone $i:$v/$g.git
+if [ -d $d/$g ]
+then cd "$d/$g"
+     git remote add github $i:$u/$g.git
+     git fetch github
+     git checkout -t -b $b github/$b
+     echo "$rb" > .ruby-version;echo "$a" > .ruby-gemset
+     echo -e "$m\n\t<name>$a-$g</name>$n$l" > .project
+else echo "Erro git clone $i:$v/$g.git"
+fi
+
+# Create root aplication
+rvm --force gemset delete $a
+rvm gemset create $a
+rvm gemset use $a
+gem install rails -v $ri
+cd $d;rm -rf $a
+gem install bundler
+rails new $a -d postgresql
+cd $d/$a
+echo "$rb" > .ruby-version;echo "$a" > .ruby-gemset
+echo -e "$m\n\t<name>$a</name>$n$l" > .project
+
+g=".";f="Gemfile"
+t="1,/^ *$"
+sed -n "$t/p" $g/$f     > $o/$a-$f
+echo -e "ruby '$rb'\n" >> $o/$a-$f
+sed    "$t/d" $g/$f    >> $o/$a-$f
+cat $o/$a-$f-fim       >> $o/$a-$f
+cp $o/$a-$f $g/$f
+
+g=".";f="Procfile"
+echo -e "web: bundle exec puma -C config/puma.rb" > $o/$a-$f
+cp $o/$a-$f $g/$f
+
+g="config";f="database.yml"
+cp $o/$a-$f $g/$f
+
+bundle install
+bundle update;bundle install
+rake db:drop;rake db:create
+
+git init
+git add .
+git commit -m 'fruga init commit'
+
+# Instalar spree
+# Usa input admin user
+spring stop
+
+rails g spree:install --migrate=false --sample=false --seed=false --user_class=Spree::User
+rails g spree:auth:install
+rails g spree_social:install
+rails g spree_i18n:install           # Runs migrations by default
+
+#[WARNING] You are not setting Devise.secret_key within your application!
+#You must set this in config/initializers/devise.rb. Here's an example:
+g="config/initializers";f="devise.rb"
+echo "Devise.secret_key=\"<%= ENV['SECRET_KEY_BASE'] %>\"">$g/$f
+
+# Para criar local DB inicial
+rake railties:install:migrations 
+rake db:migrate
+rake db:seed
+
+# inicial configuracao mfpt
+$j/scripts/umfpt -l|sh
+
+g="mfpt";b="{ \"name\": \"$a\",\"description\": \"Mercado Fruga Portugal\" }"
+curl -u "$v:$p" -X DELETE -i $h/repos/$v/$g         > $o/$a-github-$g;sleep 20
+curl -u "$v:$p" -X POST   -i $h/user/repos -d "$b" >> $o/$a-github-$g;sleep 20
+
+git add .
+git commit -m 'fruga generator commit'
+
+git remote add origin $i:$v/$a.git
+git push -u origin master
+
+#INIT heroku
+heroku apps:destroy --app $a --confirm $a
+heroku apps:create $a --region eu
+
+# eneble serving static files
+heroku config:set RAILS_SERVE_STATIC_FILES=true
+
+# numero processos webserver com 1 dyno 4 max - limitacoes de memoria
+heroku config:set WEB_CONCURRENCY=2
+# MRI ruby is not thread safe
+heroku config:set MAX_THREADS=1
+
+# aws amazon for paperclip
+heroku config:set MFAWS_HOST="$MFAWS_HOST"
+heroku config:set MFAWS_BUCKET="$MFAWS_BUCKET"
+heroku config:set MFAWS_KEY="$MFAWS_KEY"
+heroku config:set MFAWS_SECRET="$MFAWS_SECRET"
+
+# action mailer
+heroku config:set CFSMTP="$CFSMTP"
+heroku config:set CFSMTP_PASSWORD="$CFSMTP_PASSWORD"
+
+# spree_login_social
+heroku config:set MFGP_API_KEY="$MFGP_API_KEY"
+heroku config:set MFGP_API_SECRET="$MFGP_API_SECRET"
+heroku config:set MFFB_API_KEY="$MFFB_API_KEY"
+heroku config:set MFFB_API_SECRET="$MFFB_API_SECRET"
+heroku config:set MFTW_API_KEY="$MFTW_API_KEY"
+heroku config:set MFTW_API_SECRET="$MFTW_API_SECRET"
+
+# heroku tem original distribution para cdn.mercado.fruga.pt
+rake assets:precompile
+git add .
+git commit -m 'fruga gzip de logo'
+git push heroku master
+
+# Para colocar pgbackup precisa DB
+heroku run rake db:migrate
+heroku run rake db:seed
+heroku pg:backups schedule DATABASE_URL --app $a --at '04:00 UTC'
+heroku domains:add mercado.fruga.pt
+
+# Para colocar assets:precompile no heroku precisa ter DB
+rm -rf public/assets
+
+# Eliminar rails default manifest files 
+# Spree uses spree/frontend/all spree/backend/all
+rm -f app/assets/stylesheets/application.css
+rm -f app/assets/javascripts/application.js
+git add . -A
+git commit -m 'fruga assets:precompile:origin no heroku distribution cdn.mercado.fruga.pt'
+git push origin master
+git push heroku master
+
+# deve ser executado depois de github merge 
+# porque podem haver novas migracoes
+rake railties:install:migrations 
+rake db:migrate
+
+# Fruga brand & images & static files
+$k/fruga-brand/actsite.sh -m
+$j/scripts/umfpt -a|sh
+
+echo "RACK_ENV=development" >> .env
+echo "PORT=3000" >> .env
+echo ".env" >> .gitignore
+
+spring stop
+bundle update;bundle install
+
+git add .
+git commit -m 'fruga umfpt logo'
+git push origin master
+git push heroku master
+
+#heroku pg:reset DATABASE # DELETE ALL ROWS
+heroku run rake railties:install:migrations
+heroku run rake db:migrate
+heroku run rake db:seed
+
+heroku restart

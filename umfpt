@@ -1,0 +1,178 @@
+#!/bin/bash
+
+PROGNAME=${0##*/}
+
+ns="as3w/fruga"
+os="init-config/fruga"
+
+a="mfpt"
+k="spree"
+c="spree_auth_devise"
+i="spree_i18n"
+j="spree_social"
+m="asset_sync"
+d="/home/hernani/Documents/as3w"
+n="$d/fruga"
+o="$d/$os"
+
+
+usage()
+{
+cat << EOF
+Mantem files para loja casa dos quadros
+EOF
+
+cat <<EOF | column -s\& -t
+
+  -h & show this output
+  -n & new      files in   $ns
+  -s & show     files in   $os
+  -u & update   files in   $os
+  -g & get      files from $os
+  -a & get      files from $os/$a
+  -k & get      files from $os/$k
+  -c & get      files from $os/$c
+  -i & get      files from $os/$i
+  -j & get      files from $os/$j
+  -m & get      files from $os/$m
+  -l & get init files from $os/$a
+  -d & diff     files in   $os
+EOF
+}
+
+new()
+{
+cd $n/$1
+for f in `git status|grep modified:|sed -e 's%[\t ]*modified:[\t ]*%%'`
+do bn=`basename $f`
+   if [ "`dirname $f|wc -c`" -gt 2 ]
+   then dn="`dirname $f`/"
+   else dn=""
+   fi
+   if [ ! -f "$o/$1/$dn$bn" ]
+   then if [ ! -d "$o/$1/$dn" ];then echo "mkdir -p $o/$1/$dn";fi
+        echo cp $n/$1/$dn$bn $o/$1/$dn$bn
+   fi
+done
+for f in `git status|grep "new  *file:"|sed -e 's%[\t ]*new  *file:[\t ]*%%'`
+do bn=`basename $f`
+   if [ "`dirname $f|wc -c`" -gt 2 ]
+   then dn="`dirname $f`/"
+   else dn=""
+   fi
+   if [ ! -f "$o/$1/$dn$bn" ]
+   then if [ ! -d "$o/$1/$dn" ];then echo "mkdir -p $o/$1/$dn";fi
+        echo cp $n/$1/$dn$bn $o/$1/$dn$bn
+   fi
+done
+}
+
+dif()
+{
+cd $o/$1
+for f in `find . -type f -print`
+do bn=`basename $f`
+   if [ "`dirname $f|wc -c`" -gt 2 ]
+   then dn="`dirname $f|cut -c3-`/"
+   else dn=""
+   fi
+   if [ -n "`diff $dn$bn $n/$1/$dn$bn`" ]
+   then echo "diff `basename $o` $1 $bn"
+        diff $dn$bn $n/$1/$dn$bn
+   fi
+done
+}
+
+shw()
+{
+cd $o/$1
+for f in `find . -type f -print`
+do bn=`basename $f`
+   if [ "`dirname $f|wc -c`" -gt 2 ]
+   then dn="`dirname $f|cut -c3-`/"
+   else dn=""
+   fi
+   if [ -f "$n/$1/$dn$bn" ]
+   then echo ja $1 $dn$bn
+   else echo no $1 $dn$bn
+   fi
+done
+}
+
+upd()
+{
+cd $o/$1
+for f in `find . -type f -print`
+do bn=`basename $f`
+   if [ "`dirname $f|wc -c`" -gt 2 ]
+   then dn="`dirname $f|cut -c3-`/"
+   else dn=""
+   fi
+   if [ -n "`diff $n/$1/$dn$bn $dn$bn`" ]
+   then echo cp $n/$1/$dn$bn $o/$1/$dn$bn
+   #else echo no $dn$bn
+   fi
+done
+}
+
+get()
+{
+cd $o/$1
+for f in `find . -type f -print`
+do bn=`basename $f`
+   if [ "`dirname $f|wc -c`" -gt 2 ]
+   then dn="`dirname $f|cut -c3-`/"
+   else dn=""
+   fi
+   if [ ! -d "$n/$1/$dn" ];then echo "mkdir -p $n/$1/$dn";fi
+   echo cp $o/$1/$dn$bn $n/$1/$dn$bn
+done
+}
+
+gcf()
+{
+cd $o/$a
+for f in `find . -type f -print|grep config`
+do bn=`basename $f`
+   if [ "`dirname $f|wc -c`" -gt 2 ]
+   then dn="`dirname $f|cut -c3-`/"
+   else dn=""
+   fi
+   if [ ! -d "$n/$a/$dn" ];then echo "mkdir -p $n/$a/$dn";fi
+   echo cp $o/$a/$dn$bn $n/$a/$dn$bn
+done
+}
+
+if [ ! -d $o/$a ];then mkdir $o/$a;fi
+if [ ! -d $o/$k ];then mkdir $o/$k;fi
+if [ ! -d $o/$c ];then mkdir $o/$c;fi
+if [ ! -d $o/$i ];then mkdir $o/$i;fi
+if [ ! -d $o/$j ];then mkdir $o/$j;fi
+if [ ! -d $o/$m ];then mkdir $o/$m;fi
+
+ARGS=$(getopt -a -o hnsugakceijmld --name $PROGNAME -- "$@")
+
+eval set -- "$ARGS"
+
+while true; do
+    case $1 in
+    -h)  usage ;   exit 0;;
+    -n)  new $a;new $k;new $c;new $i;new $j;new $m; exit 0;;
+    -s)  shw $a;shw $k;shw $c;shw $i;shw $j;shw $m; exit 0;;
+    -u)  upd $a;upd $k;upd $c;upd $i;upd $j;upd $m; exit 0;;
+    -g)  get $a;get $k;get $c;get $i;get $j;get $m; exit 0;;
+    -a)  get $a;                                    exit 0;;
+    -k)  get $k;                                    exit 0;;
+    -c)  get $c;                                    exit 0;;
+    -i)  get $i;                                    exit 0;;
+    -j)  get $j;                                    exit 0;;
+    -m)  get $m;                                    exit 0;;
+    -l)  gcf   ;                                    exit 0;;
+    -d)  dif $a;dif $k;dif $c;dif $i;dif $j;dif $m; exit 0;;
+    --)  shift; break;;
+    *)   shift; break;;
+    esac
+    shift
+done
+
+usage

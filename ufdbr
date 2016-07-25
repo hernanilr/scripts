@@ -1,0 +1,178 @@
+#!/bin/bash
+
+PROGNAME=${0##*/}
+
+a="fdbr"
+k="spree"
+c="spree_auth_devise"
+e="spree_bootstrap_frontend"
+i="spree_i18n"
+j="spree_social"
+m="asset_sync"
+d="/home/hernani/Documents/as3w"
+n="$d/fenix"
+o="$d/init-config"
+
+usage()
+{
+cat << EOF
+Mantem files para loja casa dos quadros
+EOF
+
+cat <<EOF | column -s\& -t
+
+  -h & show this output
+  -s & show     files in   $o
+  -n & new      files in   $n
+  -u & update   files in   `basename $o`
+  -g & get      files from `basename $o`
+  -a & get      files from `basename $o`/$a
+  -k & get      files from `basename $o`/$k
+  -c & get      files from `basename $o`/$c
+  -e & get      files from `basename $o`/$e
+  -i & get      files from `basename $o`/$i
+  -j & get      files from `basename $o`/$j
+  -m & get      files from `basename $o`/$m
+  -l & get init files from `basename $o`/$a
+  -d & diff     files in   `basename $o`
+EOF
+}
+
+newsf()
+{
+cd $n/$1
+for f in `git status|grep modified:|sed -e 's%[\t ]*modified:[\t ]*%%'`
+do bn=`basename $f`
+   if [ "`dirname $f|wc -c`" -gt 2 ]
+   then dn="`dirname $f`/"
+   else dn=""
+   fi
+   if [ ! -f "$o/$1/$dn$bn" ]
+   then if [ ! -d "$o/$1/$dn" ];then echo "mkdir -p $o/$1/$dn";fi
+        echo cp $n/$1/$dn$bn $o/$1/$dn$bn
+   fi
+done
+for f in `git status|grep "new  *file:"|sed -e 's%[\t ]*new  *file:[\t ]*%%'`
+do bn=`basename $f`
+   if [ "`dirname $f|wc -c`" -gt 2 ]
+   then dn="`dirname $f`/"
+   else dn=""
+   fi
+   if [ ! -f "$o/$1/$dn$bn" ]
+   then if [ ! -d "$o/$1/$dn" ];then echo "mkdir -p $o/$1/$dn";fi
+        echo cp $n/$1/$dn$bn $o/$1/$dn$bn
+   fi
+done
+}
+
+difsf()
+{
+cd $o/$1
+for f in `find . -type f -print`
+do bn=`basename $f`
+   if [ "`dirname $f|wc -c`" -gt 2 ]
+   then dn="`dirname $f|cut -c3-`/"
+   else dn=""
+   fi
+   if [ -n "`diff $dn$bn $n/$1/$dn$bn`" ]
+   then echo "diff `basename $o` $1 $bn"
+        diff $dn$bn $n/$1/$dn$bn
+   fi
+done
+}
+
+shwsf()
+{
+cd $o/$1
+for f in `find . -type f -print`
+do bn=`basename $f`
+   if [ "`dirname $f|wc -c`" -gt 2 ]
+   then dn="`dirname $f|cut -c3-`/"
+   else dn=""
+   fi
+   if [ -f "$n/$1/$dn$bn" ]
+   then echo ja $1 $dn$bn
+   else echo no $1 $dn$bn
+   fi
+done
+}
+
+updsf()
+{
+cd $o/$1
+for f in `find . -type f -print`
+do bn=`basename $f`
+   if [ "`dirname $f|wc -c`" -gt 2 ]
+   then dn="`dirname $f|cut -c3-`/"
+   else dn=""
+   fi
+   if [ -n "`diff $n/$1/$dn$bn $dn$bn`" ]
+   then echo cp $n/$1/$dn$bn $o/$1/$dn$bn
+   #else echo no $dn$bn
+   fi
+done
+}
+
+getsf()
+{
+cd $o/$1
+for f in `find . -type f -print`
+do bn=`basename $f`
+   if [ "`dirname $f|wc -c`" -gt 2 ]
+   then dn="`dirname $f|cut -c3-`/"
+   else dn=""
+   fi
+   if [ ! -d "$n/$1/$dn" ];then echo "mkdir -p $n/$1/$dn";fi
+   echo cp $o/$1/$dn$bn $n/$1/$dn$bn
+done
+}
+
+getinit()
+{
+cd $o/$a
+for f in `find . -type f -print|grep config`
+do bn=`basename $f`
+   if [ "`dirname $f|wc -c`" -gt 2 ]
+   then dn="`dirname $f|cut -c3-`/"
+   else dn=""
+   fi
+   if [ ! -d "$n/$a/$dn" ];then echo "mkdir -p $n/$a/$dn";fi
+   echo cp $o/$a/$dn$bn $n/$a/$dn$bn
+done
+}
+
+if [ ! -d $o/$a ];then mkdir $o/$a;fi
+if [ ! -d $o/$k ];then mkdir $o/$k;fi
+if [ ! -d $o/$c ];then mkdir $o/$c;fi
+if [ ! -d $o/$e ];then mkdir $o/$e;fi
+if [ ! -d $o/$i ];then mkdir $o/$i;fi
+if [ ! -d $o/$j ];then mkdir $o/$j;fi
+if [ ! -d $o/$m ];then mkdir $o/$m;fi
+
+ARGS=$(getopt -a -o hnsugakceijmld --name $PROGNAME -- "$@")
+
+eval set -- "$ARGS"
+
+while true; do
+    case $1 in
+    -h)  usage ;   exit 0;;
+    -n)  newsf $a;newsf $k;newsf $c;newsf $e;newsf $i;newsf $j;newsf $m; exit 0;;
+    -s)  shwsf $a;shwsf $k;shwsf $c;shwsf $e;shwsf $i;shwsf $j;shwsf $m; exit 0;;
+    -u)  updsf $a;updsf $k;updsf $c;updsf $e;updsf $i;updsf $j;updsf $m; exit 0;;
+    -g)  getsf $a;getsf $k;getsf $c;getsf $e;getsf $i;getsf $j;getsf $m; exit 0;;
+    -a)  getsf $a;                                                       exit 0;;
+    -k)  getsf $k;                                                       exit 0;;
+    -c)  getsf $c;                                                       exit 0;;
+    -e)  getsf $e;                                                       exit 0;;
+    -i)  getsf $i;                                                       exit 0;;
+    -j)  getsf $j;                                                       exit 0;;
+    -m)  getsf $m;                                                       exit 0;;
+    -l)  getinit ;                                                       exit 0;;
+    -d)  difsf $a;difsf $k;difsf $c;difsf $e;difsf $i;difsf $j;difsf $m; exit 0;;
+    --)  shift; break;;
+    *)   shift; break;;
+    esac
+    shift
+done
+
+usage

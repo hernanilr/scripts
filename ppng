@@ -6,7 +6,7 @@ require 'color'
 require 'rmagick'
 require 'paleta'
 
-$opt = { home: "/home/hernani/Documents/fruga-brand", limit: 0.1 }
+$opt = { home: "/home/hernani/Documents/fruga-brand", limit: 0.1, bak: "cmc"}
 
 def palette
 
@@ -135,6 +135,27 @@ $dco.push($vco[7]+":h+0.000,s+0.237,l-0.216") #c31
 
 end
 
+def plural(n, s, p=nil)
+    if n == 1
+        "1 #{s}"
+    elsif p
+        "#{n} #{p}"
+    else
+        "#{n} #{s}s"
+    end
+end
+
+def sc(c)
+  s=Paleta::Color.new(:hex,c)
+  b=$vco.map { |t| { k: t, sm: Paleta::Color.new(:hex,t).similarity(s) } }
+  r=b.reject { |t| t[:sm] > $opt[:limit] }
+  r.sort { |a,b| a[:sm] <=> b[:sm] }[0]
+end
+
+def fz(o,s,l)
+  l+'%+.3f' % (o-s)
+end
+
 def showpalette
 
 n=0
@@ -147,97 +168,239 @@ end
 
 def showcolors(typ)
 
-  # mostra cores actualmente nos svgs
   dirb=File.join($opt[:home], $b, "??.svg")
   dirc=File.join($opt[:home], $c, "??.svg")
 
   puts "current #{typ} colors in svgs"
 
-  chex=[]
-  Dir.glob([dirb, dirc]) do |f|
-    File.readlines(f).each do |li| 
-      chex.push(li[/#....../i].downcase) if (li[/#{typ}:#/])
+  Dir.glob([dirb, dirc]).sort.each do |f|
+    cfi=[]
+    File.foreach(f).each do |li| 
+      cfi.push(li.scan(/#{typ}:(#\h{6})/i)) if li.scan(/#{typ}:(#\h{6})/i).any?
+    end
+    if !cfi.empty?
+      puts File.basename(f,".svg")+" "+cfi.uniq.sort.join(" ").downcase
     end
   end
-  puts chex.uniq
 
-end
-
-def sc(c,v)
-  b=v.map { |t| { k: t, sm: Paleta::Color.new(:hex,t).similarity(Paleta::Color.new(:hex,c)) } }
-  r=b.reject { |t| t[:sm] > $opt[:limit] }
-  r.sort { |a,b| a[:sm] <=> b[:sm] }[0]
 end
 
 def simreport
 
-#def fz(o,s,l)
-#  l+'%+.3f' % (o-s)
-#end
+  dirb=File.join($opt[:home], $b, "??.svg")
+  dirc=File.join($opt[:home], $c, "??.svg")
 
-  # mostra cores actualmente nos svgs
-  dirb=File.join($opt[:home], $b, "*.svg")
-  dirc=File.join($opt[:home], $c, "*.svg")
-
-  puts "similarity report on new colors in svgs"
-
+  nco=[]
   Dir.glob([dirb, dirc]).sort.each do |f|
-    chex=[]
-    File.readlines(f).each do |li| 
-      chex.push(li[/#....../i].downcase) if (li[/fill:#/])
-      chex.push(li[/#....../i].downcase) if (li[/stroke:#/])
+    cf=[]
+    cs=[]
+    File.foreach(f).each do |li| 
+      cf.push(li.scan(/fill:(#\h{6})/i))   if li.scan(/fill:(#\h{6})/i).any?
+      cs.push(li.scan(/stroke:(#\h{6})/i)) if li.scan(/stroke:(#\h{6})/i).any?
     end
-    if !(chex-$vco).empty?
-      k=chex-$vco
-      z=k.map {|m| r=sc(m,$vco); { o: m, s: r ? r[:k] : nil, sm: r ? r[:sm] : nil } }
-      s=z.reject {|m| m[:sm].nil? }
-      n=z.reject {|m| !m[:sm].nil? }
-      #s.sort! {|a,b| a[:sm] <=> b[:sm] }
-      #s.each  {|m| 
-      #  co=Color::RGB.from_html(m[:o])
-      #  cs=Color::RGB.from_html(m[:s])
-      #  puts m[:o]+':'+m[:s]+'|'+
-      #       fz(co.to_hsl.h,cs.to_hsl.h,'h')+
-      #       fz(co.to_hsl.s,cs.to_hsl.s,'s')+
-      #       fz(co.to_hsl.l,cs.to_hsl.l,'l')+
-      #       'sm%.2f' % m[:sm]
-      #}
-      #n.each  {|m| puts m[:o]+':'+'nao' }
-      puts File.basename(f)+", #{sprintf('%02d',s.count)} similar, #{sprintf('%02d',n.count)} unmatched colors"
+    cfn=(cf.flatten-$vco).uniq
+    csn=(cs.flatten-$vco).uniq
+    if !(cfn+csn).empty?
+      nco+=(cfn+csn).uniq
+      zf=cfn.map {|m| r=sc(m); { o: m, s: r ? r[:k] : nil, sm: r ? r[:sm] : nil } }
+      zs=csn.map {|m| r=sc(m); { o: m, s: r ? r[:k] : nil, sm: r ? r[:sm] : nil } }
+      sf=zf.reject {|m| m[:sm].nil? }
+      ss=zs.reject {|m| m[:sm].nil? }
+      nf=zf.reject {|m| !m[:sm].nil? }
+      ns=zs.reject {|m| !m[:sm].nil? }
+      puts File.basename(f)+" (fill colors #{sprintf('%02d',sf.count)} similar,#{sprintf('%02d',nf.count)} unmatched)"+
+                            " (stroke colors #{sprintf('%02d',ss.count)} similar, #{sprintf('%02d',ns.count)} unmatched)"
     end
+  end
+  if nco.uniq.empty?
+    puts "no new colors in svgs"
+  else
+    puts "Total "+plural(nco.uniq.count,"new color")+" in svgs"
+    puts nco.uniq.join(" ").downcase
   end
 
 end
 
-def simchange
+def matchedcolorshtml
 
-  # mostra cores actualmente nos svgs
-  dirb=File.join($opt[:home], $b, "t?.svg")
-  dirc=File.join($opt[:home], $c, "zz.svg")
+  dirb=File.join($opt[:home], $b, "??.svg")
+  dirc=File.join($opt[:home], $c, "??.svg")
 
-  puts "change similar colors in svgs"
+  nco=[]
+  Dir.glob([dirb, dirc]).sort.each do |f|
+    ct=[]
+    File.foreach(f).each do |li| 
+      ct.push(li.scan(/fill:(#\h{6})/i))   if li.scan(/fill:(#\h{6})/i).any?
+      ct.push(li.scan(/stroke:(#\h{6})/i)) if li.scan(/stroke:(#\h{6})/i).any?
+    end
+    ctn=(ct.flatten-$vco).uniq
+    if !ctn.empty?
+      z=ctn.map {|m| r=sc(m); { o: m, s: r ? r[:k] : nil, sm: r ? r[:sm] : nil } }
+      nco+=z.reject {|m| m[:sm].nil? }
+    end
+  end
+  if nco.empty?
+    puts "no matched colors in svgs"
+  else
+    nco.sort! {|a,b| a[:sm] <=> b[:sm] }
+    nco.uniq.each do |m|
+      puts "<h1 style=\"background-color:#{m[:o]};color:#{m[:s]}\">nova:#{m[:o]}-pallete:#{m[:s]}-grau:#{sprintf('%.4f',m[:sm])}</h1>"
+    end
+  end
+
+end 
+
+def unmatchedcolorshtml
+
+  dirb=File.join($opt[:home], $b, "??.svg")
+  dirc=File.join($opt[:home], $c, "??.svg")
+
+  nco=[]
+  Dir.glob([dirb, dirc]).sort.each do |f|
+    ct=[]
+    File.foreach(f).each do |li| 
+      ct.push(li.scan(/fill:(#\h{6})/i))   if li.scan(/fill:(#\h{6})/i).any?
+      ct.push(li.scan(/stroke:(#\h{6})/i)) if li.scan(/stroke:(#\h{6})/i).any?
+    end
+    ctn=(ct.flatten-$vco).uniq
+    if !ctn.empty?
+      z=ctn.map {|m| r=sc(m); { o: m, s: r ? r[:k] : nil, sm: r ? r[:sm] : nil } }
+      nco+=z.reject {|m| !m[:sm].nil? }
+    end
+  end
+  if nco.empty?
+    puts "no unmatched colors in svgs"
+  else
+    nco.sort! {|a,b| a[:sm] <=> b[:sm] }
+    nco.uniq.each do |m|
+      puts "<h1 style=\"background-color:#{m[:o]};color:#000000\">unmatched:#{m[:o]}</h1>"
+    end
+  end
+
+end 
+
+def optsvgs
+
+  dirb=File.join($opt[:home], $b, "??.svg")
+  dirc=File.join($opt[:home], $c, "??.svg")
+
+  puts "optimizar svgs"
 
   Dir.glob([dirb, dirc]).sort.each do |f|
-    chex=[]
-    File.readlines(f).each do |li| 
-      chex.push(li[/#....../i].downcase) if (li[/fill:#/])
-      chex.push(li[/#....../i].downcase) if (li[/stroke:#/])
+    t="opt-"+File.basename(f, ".svg")+"-"+File.basename(File.dirname(f))+"-"+Time.now.strftime("%Y%m%d%H%M%S")+".svg"
+    o=File.join(File.dirname(File.dirname(f)), $m, t)
+    puts "Processar "+File.basename(f)+" backup saved in "+t
+    FileUtils.cp(f, o)
+    system "inkscape -l #{f} #{o}"
+  end
+
+end
+ 
+def simchange
+
+  dirb=File.join($opt[:home], $b, "??.svg")
+  dirc=File.join($opt[:home], $c, "??.svg")
+
+  n=0
+  Dir.glob([dirb, dirc]).sort.each do |f|
+    ct=[]
+    File.foreach(f).each do |li| 
+      ct.push(li.scan(/fill:(#\h{6})/i))   if li.scan(/fill:(#\h{6})/i).any?
+      ct.push(li.scan(/stroke:(#\h{6})/i)) if li.scan(/stroke:(#\h{6})/i).any?
     end
-    if !(chex-$vco).empty?
-      k=(chex-$vco).map {|m| r=sc(m,$vco); { o: m, s: r ? r[:k] : nil, sm: r ? r[:sm] : nil } }
+    ctn=(ct.flatten-$vco).uniq
+    if !ctn.empty?
+      k=ctn.map {|m| r=sc(m); { o: m, s: r ? r[:k] : nil, sm: r ? r[:sm] : nil } }
       s=k.reject {|m| m[:sm].nil? }
       if !s.empty?
-        sfi=File.basename(f, ".svg")+"-"+Time.now.strftime("%Y%m%d%H%M%S")+".svg"
+        sfi="cmc-"+File.basename(f, ".svg")+"-"+File.basename(File.dirname(f))+"-"+Time.now.strftime("%Y%m%d%H%M%S")+".svg"
         FileUtils.cp(f, File.join(File.dirname(File.dirname(f)), $m, sfi))
         $nfi = File.read(f)
-        s.map {|u| $nfi=$nfi.gsub(u[:o], u[:s]) }
+        s.map {|u| $nfi=$nfi.gsub(":#{u[:o]}", ":#{u[:s]}") }
         File.open(f, "w") {|file| file.puts $nfi }
         puts File.basename(f)+", #{sprintf('%02d',s.count)} similar colors changes"
+        n+=1
       end
     end
   end
+  if n==0
+    puts "no matched colors in svgs"
+  end
 
 end
+
+def goback
+
+  gobf=[]
+  Dir.glob(File.join($opt[:home], $m, $opt[:bak]+"-??-*.svg")) do |f| 
+    gobf.push(File.basename(f)[4,2]) if !gobf.include?(File.basename(f)[4,2])
+  end
+
+  gobf.each do |sf|
+    fr=Dir.glob(File.join($opt[:home], $m, $opt[:bak]+"-"+sf+"-*.svg")).sort.last
+    re=$b+"|"+$c
+    #puts fr
+    #puts File.join($opt[:home], File.basename(fr)[/#{re}/], sf+".svg")
+    FileUtils.cp(fr, File.join($opt[:home], File.basename(fr)[/#{re}/], sf+".svg"))
+    puts "Recuperado "+File.basename(fr)
+    FileUtils.rm(fr)
+  end
+
+  puts "Nada para recuperar em "+$opt[:bak] if gobf.empty?
+
+end
+
+def changecolororides
+
+  dirb=File.join($opt[:home], $b, "??.svg")
+  dirc=File.join($opt[:home], $c, "??.svg")
+
+  n=0
+  Dir.glob([dirb, dirc]).sort.each do |f|
+    if File.foreach(f).grep(/(fill|stroke):#{$co.html}/i).any?
+      $nfi = File.read(f)
+      sfi="cod-"+File.basename(f, ".svg")+"-"+File.basename(File.dirname(f))+"-"+Time.now.strftime("%Y%m%d%H%M%S")+".svg"
+      FileUtils.cp(f, File.join(File.dirname(File.dirname(f)), $m, sfi))
+      $nfi=$nfi.gsub(/(fill|stroke):#{$co.html}/, "\\1:#{$cs.html}")
+      File.open(f, "w") {|file| file.puts $nfi }
+      puts File.basename(f)+", colors changed"
+      n+=1
+    end
+  end
+  puts plural(n,"svg")+" had color "+$co.html
+
+end
+
+def showcolororides
+
+puts $co.html+":"+$cs.html+":$vco.push(Color::HSL.from_fraction("+
+"c.to_hsl."+fz($co.to_hsl.h,$cs.to_hsl.h,'h')+","+
+"c.to_hsl."+fz($co.to_hsl.s,$cs.to_hsl.s,'s')+","+
+"c.to_hsl."+fz($co.to_hsl.l,$cs.to_hsl.l,'l')+").html)"
+
+puts $co.html+":"+$cs.html+":$dco.push(\""+$co.html+":"+
+fz($co.to_hsl.h,$cs.to_hsl.h,'h')+","+
+fz($co.to_hsl.s,$cs.to_hsl.s,'s')+","+
+fz($co.to_hsl.l,$cs.to_hsl.l,'l')+"\")"
+
+end
+
+def checkcolors
+
+  if $opt[:corori].nil? or $opt[:cordes].nil?
+    puts "use -c corori:cordes para defenir cores"
+  else
+  if $opt[:corori].length!=6 or $opt[:cordes].length!=6
+    puts "cores origem:destino devem estar no formato RGB-HEX FFFFFF (6 char)"
+    return false
+  else
+    $co=Color::RGB.from_html($opt[:corori])
+    $cs=Color::RGB.from_html($opt[:cordes])
+    return true
+  end
+  end
+
+end 
 
 # default logos & compositions
 $f1="fc" # fruga.big-tree-sun-grass
@@ -281,31 +444,35 @@ opt_parser = OptionParser.new do |o|
   o.separator  "  sfc: show current fill   colors for all svgs"
   o.separator  "  ssc: show current stroke colors for all svgs"
   o.separator  "  sip: show internal palette"
+  o.separator  "  suc: show unmatched color html"
+  o.separator  "  smc: show   matched color html"
   o.separator  "  ssr: show similarity report"
-  o.separator  "  suc: show unmatched color list (html  )"
-  o.separator  "  mch: show   matched color list (html  )"
-  o.separator  "  mcs: show   matched color list (script)"
+  o.separator  "  sod: show cordes obtained from corori"
   o.separator  "  opt: optimize svgs - deve ser feito antes novos svgs [IMPORTANTE]"
-  o.separator  "  sod: show cordes values obtained from corori"
   o.separator  "  cod: change corori into cordes"
-  o.separator  "  csc: change similar colors"
+  o.separator  "  cmc: change matched colors"
+  o.separator  "  bak: recover from saved svgs"
   o.separator  ""
   o.separator  "options"
   
+  o.on("-t typ","set backup to recover from opt:cod:cmc (default #{$opt[:bak]})") do |typ|
+    $opt[:bak] = typ
+  end
+
   o.on("-o dir-base","dir base de trabalho") do |dir|
     $opt[:home] = dir
   end
 
-  o.on("-c corori:cordes","cores no formato hex FFFFFF") do |cors|
-    $opt[:corori] = cors[0,5]
-    $opt[:cordes] = cors[7,12]
+  o.on("-c corori:cordes","cores origem:destino no formato RGB-HEX FFFFFF") do |cors|
+    $opt[:corori] = cors[0,6]
+    $opt[:cordes] = cors[7,6]
   end
   
   o.on("-l n",Float,"set similarity limit (default #{$opt[:limit]})") do |n|
     $opt[:limit] = n
   end
 
-  o.on("-h","ajuda") do 
+  o.on("-h","--help","ajuda") do 
     puts opt_parser
   end
 end
@@ -313,31 +480,36 @@ end
 opt_parser.parse!
 
 case ARGV[0]
-  when "sfc"
+  when "sfc" # show current fill   colors for all svgs
     showcolors "fill"
-  when "ssc"
+  when "ssc" # show current stroke colors for all svgs
     showcolors "stroke"
-  when "sip"
+  when "sip" # show internal palette
     palette
     showpalette
-  when "ssr"
+  when "suc" # show unmatched color html
+    palette
+    unmatchedcolorshtml
+  when "smc" # show   matched color html
+    palette
+    matchedcolorshtml
+  when "ssr" # show similarity report
     palette
     simreport
-  when "suc"
-    puts "show unmatched color list (html  ) #{$opt.inspect}"
-  when "mch"
-    puts "show   matched color list (html  ) #{$opt.inspect}"
-  when "mcs"
-    puts "show   matched color list (script) #{$opt.inspect}"
-  when "opt"
-    puts "optimize svgs - deve ser feito antes novos svgs [IMPORTANTE] #{$opt.inspect}"
-  when "sod"
-    puts "show cordes values obtained from corori #{$opt.inspect}"
-  when "cod"
-    puts "change corori into cordes #{$opt.inspect}"
-  when "csc"
+  when "sod" # show cordes obtained from corori
+    showcolororides   if checkcolors
+  when "opt" # optimize svgs - deve ser feito antes novos svgs [IMPORTANTE]"
+    optsvgs
+  when "cod" # change corori into cordes
+    changecolororides if checkcolors
+  when "cmc" # change matched colors
     palette
     simchange
+  when "bak" # recover from saved svgs
+    goback
+
+  when "help"
+    puts opt_parser
 else
     puts "processar pgns"
 end

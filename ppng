@@ -132,6 +132,7 @@ $dco.push($vco[7]+":h+0.000,s+0.131,l+0.265") #c28
 $dco.push($vco[7]+":h+0.000,s+0.076,l+0.131") #c29
 $dco.push($vco[7]+":h+0.000,s+0.083,l-0.110") #c30
 $dco.push($vco[7]+":h+0.000,s+0.237,l-0.216") #c31
+$dco.push("cor nova")
 
 end
 
@@ -160,7 +161,7 @@ def showpalette
 
 n=0
 $vco.each do |c|
-  puts "<h1 style=\"background-color:#{c};\">cor:#{sprintf('%02d',n)}:#{c}:#{$dco[n]}</h1>"
+  puts "<h1 style=\"background-color:#{c};color:#{$dco[n][/#\h{6}/]};\">c#{sprintf('%02d',n)}:#{c}:#{$dco[n]}</h1>"
   n+=1
 end
 
@@ -171,16 +172,34 @@ def showcolors(typ)
   dirb=File.join($opt[:home], $b, "??.svg")
   dirc=File.join($opt[:home], $c, "??.svg")
 
-  puts "current #{typ} colors in svgs"
+  #puts "current #{typ} colors used in svgs"
 
+  tco=[]
+  hco={}
   Dir.glob([dirb, dirc]).sort.each do |f|
     cfi=[]
     File.foreach(f).each do |li| 
       cfi.push(li.scan(/#{typ}:(#\h{6})/i)) if li.scan(/#{typ}:(#\h{6})/i).any?
     end
     if !cfi.empty?
-      puts File.basename(f,".svg")+" "+cfi.uniq.sort.join(" ").downcase
+      bsv=File.basename(f,".svg")
+      cfu=cfi.flatten.uniq
+      tco+=cfu
+      #puts bsv+" "+cfu.sort.join(" ").downcase
+      cfu.each do |c|
+        if hco.include?(c)
+          hco[c].push(bsv)
+        else
+          hco[c]=[bsv]
+        end
+      end
     end
+  end
+
+  tcp=tco.uniq.map { |t| { k: t, pn: $vco.index(t) ? $vco.index(t) : $vco.count } }
+  tco=tcp.sort { |a,b| a[:pn] <=> b[:pn] }
+  tco.each do |c|
+    puts "<h1 style=\"background-color:#{c[:k]};\">c#{sprintf('%02d',c[:pn])}:#{c[:k]}:#{hco[c[:k]].join(" ")}</h1>"
   end
 
 end
@@ -216,7 +235,10 @@ def simreport
     puts "no new colors in svgs"
   else
     puts "Total "+plural(nco.uniq.count,"new color")+" in svgs"
-    puts nco.uniq.join(" ").downcase
+    #puts nco.uniq.join(" ").downcase
+    nco.uniq.each do |c|
+      puts "<h1 style=\"background-color:#{c};\">#{c}:cor nova</h1>"
+    end
   end
 
 end
@@ -433,9 +455,7 @@ $e="other"
 $z="/home/hernani/Documents/as3w/mfpt"
 $x="/home/hernani/Documents/as3w/cfpt"
 
-so="
-  -b svg     & go back to last change similarity colors
-"
+palette
 
 opt_parser = OptionParser.new do |o|
   o.banner = "Usage: ppng COMANDO [OPTIONS]"
@@ -485,16 +505,12 @@ case ARGV[0]
   when "ssc" # show current stroke colors for all svgs
     showcolors "stroke"
   when "sip" # show internal palette
-    palette
     showpalette
   when "suc" # show unmatched color html
-    palette
     unmatchedcolorshtml
   when "smc" # show   matched color html
-    palette
     matchedcolorshtml
   when "ssr" # show similarity report
-    palette
     simreport
   when "sod" # show cordes obtained from corori
     showcolororides   if checkcolors
@@ -503,7 +519,6 @@ case ARGV[0]
   when "cod" # change corori into cordes
     changecolororides if checkcolors
   when "cmc" # change matched colors
-    palette
     simchange
   when "bak" # recover from saved svgs
     goback
